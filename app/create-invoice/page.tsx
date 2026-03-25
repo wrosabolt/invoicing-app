@@ -58,9 +58,9 @@ export default function CreateInvoice() {
   const gstAmount = subtotal * (gstRate / 100);
   const total = subtotal + gstAmount;
 
-  const updateItem = (id: string, field: string, value: string | number) => {
+  const updateItem = (id: string, field: string, value: string | number | undefined) => {
     setItems(prev => prev.map(item => 
-      item.id === id ? { ...item, [field]: value } : item
+      item.id === id ? { ...item, [field]: value ?? "" } : item
     ));
   };
 
@@ -338,7 +338,7 @@ export default function CreateInvoice() {
                     <input
                       type="text"
                       value={item.description || ""}
-                      onChange={(e) => updateItem(item.id, "description", (e.currentTarget as HTMLInputElement).value || "")}
+                      onChange={(e) => updateItem(item.id, "description", (e.currentTarget as HTMLInputElement).value)}
                       className="w-full px-2 py-1 border border-gray-300 rounded bg-white text-gray-900"
                       placeholder="Plumbing services"
                     />
