@@ -10,10 +10,11 @@ export interface CompanySettings {
 
 export interface ClientInfo {
   id?: string;
-  companyName: string;
-  contactName: string;
+  name: string;
+  company: string;
   address: string;
   email: string;
+  phone: string;
 }
 
 export interface InvoiceItem {
