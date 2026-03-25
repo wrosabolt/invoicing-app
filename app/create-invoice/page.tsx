@@ -197,7 +197,7 @@ export default function CreateInvoice() {
                       <td className="py-2">{item.description || "Professional services"}</td>
                       <td className="text-right">{item.hoursWorked}</td>
                       <td className="text-right">${(item.hourlyRate || 0).toFixed(2)}</td>
-                      <td className="text-right">${(item.hoursWorked * item.hourlyRate).toFixed(2)}</td>
+                      <td className="text-right">${(item.hoursWorked * (item.hourlyRate || 0)).toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -364,7 +364,7 @@ export default function CreateInvoice() {
                     />
                   </td>
                   <td className="py-2 text-right">
-                    ${(item.hoursWorked * item.hourlyRate).toFixed(2)}
+                    ${(item.hoursWorked * (item.hourlyRate || 0)).toFixed(2)}
                   </td>
                   <td className="py-2">
                     <button
