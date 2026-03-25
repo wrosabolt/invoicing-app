@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { Invoice, ClientInfo, InvoiceItem } from "@/lib/types";
 
@@ -338,7 +338,7 @@ export default function CreateInvoice() {
                     <input
                       type="text"
                       value={item.description || ""}
-                      onChange={e => { updateItem(item.id, "description", (e.currentTarget as HTMLInputElement).value || ""); }}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => { updateItem(item.id, "description", e.target.value || ""); }}
                       className="w-full px-2 py-1 border border-gray-300 rounded bg-white text-gray-900"
                       placeholder="Plumbing services"
                     />
