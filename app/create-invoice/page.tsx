@@ -337,7 +337,7 @@ export default function CreateInvoice() {
                   <td className="py-2">
                     <input
                       type="text"
-                      value={item.description}
+                      value={item.description || ""}
                       onChange={e => updateItem(item.id, "description", e.target.value)}
                       className="w-full px-2 py-1 border border-gray-300 rounded bg-white text-gray-900"
                       placeholder="Plumbing services"
