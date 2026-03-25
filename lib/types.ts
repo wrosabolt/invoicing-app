@@ -18,8 +18,10 @@ export interface ClientInfo {
 }
 
 export interface InvoiceItem {
+  id?: string;
   description: string;
   hoursWorked: number;
+  hourlyRate?: number;
 }
 
 export interface Invoice {
