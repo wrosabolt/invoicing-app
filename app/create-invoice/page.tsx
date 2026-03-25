@@ -58,9 +58,9 @@ export default function CreateInvoice() {
   const gstAmount = subtotal * (gstRate / 100);
   const total = subtotal + gstAmount;
 
-  const updateItem = (id: string, field: string, value: string | number | undefined) => {
+  const updateItem = (id: string, field: string, value: string | number | null | undefined) => {
     setItems(prev => prev.map(item => 
-      item.id === id ? { ...item, [field]: value ?? "" } : item
+      item.id === id ? { ...item, [field]: value === null ? "" : value as string | number } : item
     ));
   };
 
