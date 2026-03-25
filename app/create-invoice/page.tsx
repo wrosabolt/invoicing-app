@@ -54,7 +54,7 @@ export default function CreateInvoice() {
       });
   }, []);
 
-  const subtotal = items.reduce((sum, item) => sum + (item.hoursWorked * item.hourlyRate), 0);
+  const subtotal = items.reduce((sum, item) => sum + (item.hoursWorked * (item.hourlyRate || 0)), 0);
   const gstAmount = subtotal * (gstRate / 100);
   const total = subtotal + gstAmount;
 
@@ -196,7 +196,7 @@ export default function CreateInvoice() {
                     <tr key={item.id} className="border-b">
                       <td className="py-2">{item.description || "Professional services"}</td>
                       <td className="text-right">{item.hoursWorked}</td>
-                      <td className="text-right">${item.hourlyRate.toFixed(2)}</td>
+                      <td className="text-right">${(item.hourlyRate || 0).toFixed(2)}</td>
                       <td className="text-right">${(item.hoursWorked * item.hourlyRate).toFixed(2)}</td>
                     </tr>
                   ))}
