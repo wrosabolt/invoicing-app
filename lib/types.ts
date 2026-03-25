@@ -9,6 +9,7 @@ export interface CompanySettings {
 }
 
 export interface ClientInfo {
+  id?: string;
   companyName: string;
   contactName: string;
   address: string;
