@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import InvoiceModal from "@/components/InvoiceModal";
-import type { Invoice, ClientInfo, LineItem } from "@/lib/types";
+import type { Invoice, ClientInfo, InvoiceItem } from "@/lib/types";
 
 export default function Home() {
   const router = useRouter();

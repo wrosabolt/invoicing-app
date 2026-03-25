@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import type { Invoice, ClientInfo, LineItem } from "@/lib/types";
+import type { Invoice, ClientInfo, InvoiceItem } from "@/lib/types";
 
 function generateId() {
   return crypto.randomUUID();
@@ -27,7 +27,7 @@ export default function CreateInvoice() {
     email: "",
     phone: "",
   });
-  const [items, setItems] = useState<LineItem[]>([
+  const [items, setItems] = useState<InvoiceItem[]>([
     { id: generateId(), description: "", hoursWorked: 0, hourlyRate: 85 }
   ]);
   const [gstRate, setGstRate] = useState(10);
@@ -58,7 +58,7 @@ export default function CreateInvoice() {
   const gstAmount = subtotal * (gstRate / 100);
   const total = subtotal + gstAmount;
 
-  const updateItem = (id: string, field: keyof LineItem, value: any) => {
+  const updateItem = (id: string, field: keyof InvoiceItem, value: any) => {
     setItems(prev => prev.map(item => 
       item.id === id ? { ...item, [field]: value } : item
     ));
