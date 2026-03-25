@@ -1,137 +1,174 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import { Settings, Plus, FileText, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { SettingsModal } from "@/components/SettingsModal";
-import { getCompanySettings, getInvoices, deleteInvoice } from "@/lib/storage";
-import { formatCurrency, formatDate } from "@/lib/calculations";
-import { CompanySettings } from "@/lib/types";
+import { useRouter } from "next/navigation";
+import InvoiceModal from "@/components/InvoiceModal";
+import type { Invoice, ClientInfo, LineItem } from "@/lib/types";
 
-export default function HomePage() {
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [settings, setSettings] = useState<CompanySettings | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
+export default function Home() {
+  const router = useRouter();
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [client, setClient] = useState<ClientInfo | null>(null);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    setSettings(getCompanySettings());
-  }, [refreshKey]);
+    fetchInvoices();
+  }, []);
 
-  const handleSettingsSaved = () => {
-    setRefreshKey((k) => k + 1);
-  };
-
-  const handleDeleteInvoice = (id: string) => {
-    if (window.confirm("Are you sure you want to delete this invoice?")) {
-      deleteInvoice(id);
-      setRefreshKey((k) => k + 1);
+  const fetchInvoices = async () => {
+    try {
+      const res = await fetch("/api/invoices");
+      const data = await res.json();
+      const parsed = data.map((inv: any) => ({
+        ...inv,
+        items: typeof inv.items === "string" ? JSON.parse(inv.items) : inv.items
+      }));
+      setInvoices(parsed);
+    } catch (error) {
+      console.error("Failed to fetch invoices:", error);
     }
   };
 
-  const invoices = getInvoices();
+  const handleRowClick = async (invoice: Invoice) => {
+    setSelectedInvoice(invoice);
+    if (invoice.clientId) {
+      try {
+        const res = await fetch(`/api/clients/${invoice.clientId}`);
+        if (res.ok) {
+          const clientData = await res.json();
+          setClient(clientData);
+        }
+      } catch (error) {
+        console.error("Failed to fetch client:", error);
+      }
+    }
+    setShowModal(true);
+  };
+
+  const handleSaveAndDownload = async () => {
+    if (!selectedInvoice) return;
+    setShowModal(false);
+    window.print();
+  };
+
+  const handleEmail = () => {
+    if (!selectedInvoice || !client) return;
+    const subject = encodeURIComponent(`Invoice ${selectedInvoice.invoiceNumber}`);
+    const body = encodeURIComponent(
+      `Dear ${client.name},\n\nPlease find attached invoice ${selectedInvoice.invoiceNumber} for $${selectedInvoice.total.toFixed(2)}.\n\nDue: ${selectedInvoice.dueDate || "Upon receipt"}\n\nThank you for your business.\n\nRosa Plumbing`
+    );
+    const mailtoLink = `mailto:${client.email}?subject=${subject}&body=${body}`;
+    window.open(mailtoLink);
+  };
+
+  const handleBack = () => {
+    setShowModal(false);
+    setSelectedInvoice(null);
+    setClient(null);
+  };
+
+  const togglePaid = async (id: string, currentPaid: boolean) => {
+    try {
+      await fetch(`/api/invoices/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paid: !currentPaid })
+      });
+      setInvoices(prev =>
+        prev.map(inv => inv.id === id ? { ...inv, paid: !currentPaid } : inv)
+      );
+      if (selectedInvoice?.id === id) {
+        setSelectedInvoice(prev => prev ? { ...prev, paid: !currentPaid } : null);
+      }
+    } catch (error) {
+      console.error("Failed to update paid status:", error);
+    }
+  };
+
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return "-";
+    const d = new Date(dateStr);
+    return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+  };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <header className="bg-white border-b">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">Invoicing</h1>
-            {settings?.companyName && (
-              <p className="text-sm text-slate-500">{settings.companyName}</p>
-            )}
+    <div className="min-h-screen bg-gray-100">
+      <div className="max-w-6xl mx-auto p-6">
+        <h1 className="text-3xl font-bold mb-6 text-gray-900">Invoices</h1>
+        
+        <button
+          onClick={() => router.push("/create-invoice")}
+          className="mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          + Create Invoice
+        </button>
+
+        {invoices.length === 0 ? (
+          <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
+            No invoices yet. Create your first invoice to get started.
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setSettingsOpen(true)}
-          >
-            <Settings className="w-4 h-4 mr-2" />
-            Settings
-          </Button>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-6 py-8">
-        {/* Quick Actions */}
-        <div className="bg-white rounded-lg border p-6 mb-8">
-          <h2 className="text-lg font-semibold mb-4">Create New Invoice</h2>
-          <p className="text-slate-600 mb-4">
-            Create a new invoice for your client. Make sure to set up your
-            company details in Settings first.
-          </p>
-          <Link href="/create-invoice">
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Create Invoice
-            </Button>
-          </Link>
-        </div>
-
-        {/* Invoice History */}
-        <div className="bg-white rounded-lg border">
-          <div className="px-6 py-4 border-b">
-            <h2 className="text-lg font-semibold">Invoice History</h2>
-            <p className="text-sm text-slate-500">
-              {invoices.length} invoice{invoices.length !== 1 ? "s" : ""} saved
-            </p>
+        ) : (
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            <table className="min-w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Invoice #</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Due</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total</th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Paid</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {invoices.map((invoice) => (
+                  <tr
+                    key={invoice.id}
+                    onClick={() => handleRowClick(invoice)}
+                    className="hover:bg-gray-50 cursor-pointer"
+                  >
+                    <td className="px-4 py-3 text-sm font-medium text-blue-600">{invoice.invoiceNumber}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{invoice.clientName}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500">{formatDate(invoice.createdAt)}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500">{formatDate(invoice.dueDate)}</td>
+                    <td className="px-4 py-3 text-sm text-right text-gray-900">${invoice.total.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`px-2 py-1 text-xs rounded ${
+                        invoice.paid ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+                      }`}>
+                        {invoice.paid ? "Paid" : "Pending"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <input
+                        type="checkbox"
+                        checked={invoice.paid || false}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          togglePaid(invoice.id, invoice.paid || false);
+                        }}
+                        className="w-5 h-5 rounded border-gray-300"
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
+        )}
+      </div>
 
-          {invoices.length === 0 ? (
-            <div className="p-12 text-center">
-              <FileText className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-500">No invoices yet</p>
-              <p className="text-sm text-slate-400">
-                Create your first invoice to get started
-              </p>
-            </div>
-          ) : (
-            <div className="divide-y">
-              {invoices.map((invoice) => (
-                <div
-                  key={invoice.id}
-                  className="px-6 py-4 flex items-center justify-between hover:bg-slate-50"
-                >
-                  <div>
-                    <p className="font-medium text-slate-900">
-                      {invoice.client?.companyName || "Unknown Client"}
-                    </p>
-                    <div className="flex items-center gap-4 mt-1">
-                      <span className="text-sm text-slate-500">
-                        {invoice.invoiceNumber}
-                      </span>
-                      <span className="text-sm text-slate-400">•</span>
-                      <span className="text-sm text-slate-500">
-                        {formatDate(invoice.createdAt)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span className="font-semibold text-slate-900">
-                      {formatCurrency(invoice.total)}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDeleteInvoice(invoice.id)}
-                    >
-                      <Trash2 className="w-4 h-4 text-slate-400" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </main>
-
-      <SettingsModal
-        isOpen={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        onSave={handleSettingsSaved}
-      />
+      {showModal && selectedInvoice && client && (
+        <InvoiceModal
+          invoice={selectedInvoice}
+          client={client}
+          onClose={handleBack}
+          onSave={handleSaveAndDownload}
+          onEmail={handleEmail}
+        />
+      )}
     </div>
   );
 }

@@ -1,145 +1,133 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Invoice, CompanySettings } from "@/lib/types";
-import { formatCurrency, formatDate, calculateTotalHours } from "@/lib/calculations";
-import { Modal } from "./ui/modal";
-import { Button } from "./ui/button";
-import { PDFDownloadLink } from "@react-pdf/renderer";
-import { InvoicePDF } from "./pdf/InvoicePDF";
-import { getCompanySettings } from "@/lib/storage";
+import { useRef } from "react";
+import type { Invoice, ClientInfo } from "@/lib/types";
 
-interface InvoiceModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onBack: () => void;
+interface Props {
   invoice: Invoice;
+  client: ClientInfo;
+  onClose: () => void;
+  onSave: () => void;
+  onEmail: () => void;
 }
 
-export function InvoiceModal({ isOpen, onClose, onBack, invoice }: InvoiceModalProps) {
-  const [saved, setSaved] = useState(false);
-  const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null);
-
-  useEffect(() => {
-    setCompanySettings(getCompanySettings());
-  }, []);
-
-  const totalHours = calculateTotalHours(invoice.items || []);
-
-  const handleSave = () => {
-    import("@/lib/storage").then(({ saveInvoice }) => {
-      saveInvoice(invoice);
-      setSaved(true);
-    });
-  };
+export default function InvoiceModal({ invoice, client, onClose, onSave, onEmail }: Props) {
+  const printRef = useRef<HTMLDivElement>(null);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Invoice Preview" size="lg">
-      <div className="space-y-6">
-        {/* Invoice Header */}
-        <div className="flex justify-between items-start border-b pb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">INVOICE</h1>
-            <p className="text-slate-500 mt-1">{invoice.invoiceNumber}</p>
-          </div>
-          <div className="text-right">
-            <h2 className="text-lg font-semibold">{invoice.client?.companyName}</h2>
-            <p className="text-sm text-slate-500">{invoice.client?.address}</p>
-            <p className="text-sm text-slate-500">{invoice.client?.email}</p>
-          </div>
-        </div>
-
-        {/* Bill To & Date */}
-        <div className="flex justify-between">
-          <div>
-            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">
-              Bill To
-            </h3>
-            <p className="font-medium">{invoice.client?.companyName}</p>
-            <p className="text-sm text-slate-600">{invoice.client?.contactName}</p>
-            <p className="text-sm text-slate-600">{invoice.client?.address}</p>
-            <p className="text-sm text-slate-600">{invoice.client?.email}</p>
-          </div>
-          <div className="text-right">
-            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">
-              Date
-            </h3>
-            <p className="font-medium">{formatDate(invoice.createdAt)}</p>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
+          <h2 className="text-xl font-bold">Invoice Preview</h2>
+          <div className="flex gap-2">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
+            >
+              Back
+            </button>
+            <button
+              onClick={onEmail}
+              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            >
+              Email
+            </button>
+            <button
+              onClick={onSave}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Save & Download
+            </button>
           </div>
         </div>
 
-        {/* Line Items */}
-        <div className="border rounded-lg overflow-hidden">
-          <table className="w-full">
+        <div ref={printRef} className="p-8">
+          <div className="flex justify-between items-start mb-8">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">INVOICE</h1>
+              <p className="text-xl font-semibold mt-1">{invoice.invoiceNumber}</p>
+              <p className="text-gray-500 mt-1">
+                Date: {new Date(invoice.createdAt).toLocaleDateString("en-AU")}
+              </p>
+              {invoice.dueDate && (
+                <p className="text-gray-500">
+                  Due: {new Date(invoice.dueDate).toLocaleDateString("en-AU")}
+                </p>
+              )}
+            </div>
+            {invoice.paid && (
+              <span className="px-4 py-2 bg-green-100 text-green-800 text-lg font-bold rounded">
+                PAID
+              </span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-8 mb-8">
+            <div>
+              <h3 className="text-sm font-medium text-gray-500 uppercase mb-2">From</h3>
+              <p className="font-medium text-gray-900">Rosa Plumbing</p>
+              <p className="text-sm text-gray-600 whitespace-pre-line">14 Emily Street
+Somerton
+VIC 3062</p>
+              <p className="text-sm text-gray-600">ABN: 86 659 791 662</p>
+              <p className="text-sm text-gray-600">rosaplumbing@outlook.com</p>
+              <p className="text-sm text-gray-600">0419 140 793</p>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-gray-500 uppercase mb-2">Bill To</h3>
+              <p className="font-medium text-gray-900">{client.name}</p>
+              {client.company && <p className="text-sm text-gray-600">{client.company}</p>}
+              <p className="text-sm text-gray-600 whitespace-pre-line">{client.address}</p>
+              {client.email && <p className="text-sm text-gray-600">{client.email}</p>}
+              {client.phone && <p className="text-sm text-gray-600">{client.phone}</p>}
+            </div>
+          </div>
+
+          <table className="w-full mb-8">
             <thead>
-              <tr className="bg-slate-50 border-b">
-                <th className="text-left p-3 text-xs font-semibold text-slate-500 uppercase">
-                  Description
-                </th>
-                <th className="text-right p-3 text-xs font-semibold text-slate-500 uppercase">
-                  Hours
-                </th>
+              <tr className="border-b-2 border-gray-300">
+                <th className="text-left py-3 text-sm font-medium text-gray-700">Description</th>
+                <th className="text-right py-3 text-sm font-medium text-gray-700">Hours</th>
+                <th className="text-right py-3 text-sm font-medium text-gray-700">Rate</th>
+                <th className="text-right py-3 text-sm font-medium text-gray-700">Amount</th>
               </tr>
             </thead>
             <tbody>
-              {invoice.items?.map((item, index) => (
-                <tr key={index} className="border-b last:border-b-0">
-                  <td className="p-3 text-sm">{item.description}</td>
-                  <td className="p-3 text-sm text-right">{item.hoursWorked.toFixed(2)}</td>
+              {invoice.items.map((item) => (
+                <tr key={item.id} className="border-b border-gray-200">
+                  <td className="py-3 text-gray-900">{item.description || "Professional services"}</td>
+                  <td className="py-3 text-right text-gray-900">{item.hoursWorked}</td>
+                  <td className="py-3 text-right text-gray-900">${item.hourlyRate.toFixed(2)}</td>
+                  <td className="py-3 text-right text-gray-900">
+                    ${(item.hoursWorked * item.hourlyRate).toFixed(2)}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
 
-        {/* Totals */}
-        <div className="flex justify-end">
-          <div className="w-64 space-y-2">
-            <div className="flex justify-between py-2 border-b">
-              <span className="text-slate-600">Total Hours</span>
-              <span className="font-medium">{totalHours.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between py-2 border-b">
-              <span className="text-slate-600">Subtotal</span>
-              <span className="font-medium">{formatCurrency(invoice.subtotal)}</span>
-            </div>
-            <div className="flex justify-between py-2 border-b">
-              <span className="text-slate-600">GST ({invoice.gstRate}%)</span>
-              <span className="font-medium">{formatCurrency(invoice.gstAmount)}</span>
-            </div>
-            <div className="flex justify-between py-3 bg-slate-900 text-white rounded-md px-4">
-              <span className="font-semibold">Total Payable</span>
-              <span className="font-bold">{formatCurrency(invoice.total)}</span>
+          <div className="flex justify-end">
+            <div className="w-64">
+              <div className="flex justify-between py-2">
+                <span className="text-gray-600">Subtotal</span>
+                <span className="text-gray-900">${invoice.subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between py-2">
+                <span className="text-gray-600">GST ({invoice.gstRate}%)</span>
+                <span className="text-gray-900">${invoice.gstAmount.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between py-2 border-t-2 border-gray-300 font-bold text-lg">
+                <span className="text-gray-900">Total</span>
+                <span className="text-gray-900">${invoice.total.toFixed(2)}</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Actions */}
-        <div className="flex justify-between pt-4 border-t">
-          <Button variant="outline" onClick={onBack}>
-            ← Back to Edit
-          </Button>
-          <div className="flex gap-3">
-            <Button
-              variant="secondary"
-              onClick={() => setSaved(true)}
-              disabled={saved}
-            >
-              {saved ? "✓ Saved" : "Save Invoice"}
-            </Button>
-            <PDFDownloadLink
-              document={<InvoicePDF invoice={invoice} companySettings={companySettings} />}
-              fileName={`${invoice.invoiceNumber}.pdf`}
-            >
-              {({ loading }) => (
-                <Button disabled={loading}>
-                  {loading ? "Generating..." : "Download PDF"}
-                </Button>
-              )}
-            </PDFDownloadLink>
+          <div className="mt-12 pt-4 border-t text-center text-gray-500 text-sm">
+            <p>Thank you for your business!</p>
           </div>
         </div>
       </div>
-    </Modal>
+    </div>
   );
 }

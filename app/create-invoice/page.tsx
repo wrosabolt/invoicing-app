@@ -2,352 +2,412 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
-import { useForm, useFieldArray } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { SettingsModal } from "@/components/SettingsModal";
-import { InvoiceModal } from "@/components/InvoiceModal";
-import { Invoice, CompanySettings, InvoiceItem } from "@/lib/types";
-import { getCompanySettings } from "@/lib/storage";
-import {
-  calculateSubtotal,
-  calculateGST,
-  calculateTotal,
-  formatCurrency,
-  generateInvoiceNumber,
-} from "@/lib/calculations";
+import type { Invoice, ClientInfo, LineItem } from "@/lib/types";
 
-const invoiceSchema = z.object({
-  clientCompanyName: z.string().min(1, "Client company name is required"),
-  clientContactName: z.string().min(1, "Contact name is required"),
-  clientAddress: z.string().min(1, "Address is required"),
-  clientEmail: z.string().email("Invalid email"),
-  items: z
-    .array(
-      z.object({
-        description: z.string().min(1, "Description is required"),
-        hoursWorked: z.string().min(1, "Hours is required").refine(
-          (val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0,
-          { message: "Hours must be a positive number" }
-        ),
-      })
-    )
-    .min(1, "At least one line item is required"),
-});
+function generateId() {
+  return crypto.randomUUID();
+}
 
-type InvoiceFormData = z.infer<typeof invoiceSchema>;
+function generateInvoiceNumber() {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const random = String(Math.floor(Math.random() * 10000)).padStart(4, "0");
+  return `INV-${year}${month}${day}-${random}`;
+}
 
-export default function CreateInvoicePage() {
+export default function CreateInvoice() {
   const router = useRouter();
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null);
+  const [client, setClient] = useState<ClientInfo>({
+    id: generateId(),
+    name: "",
+    company: "",
+    address: "",
+    email: "",
+    phone: "",
+  });
+  const [items, setItems] = useState<LineItem[]>([
+    { id: generateId(), description: "", hoursWorked: 0, hourlyRate: 85 }
+  ]);
+  const [gstRate, setGstRate] = useState(10);
+  const [dueDate, setDueDate] = useState("");
+  const [invoiceNumber] = useState(generateInvoiceNumber());
   const [createdInvoice, setCreatedInvoice] = useState<Invoice | null>(null);
-
-  const {
-    register,
-    control,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm<InvoiceFormData>({
-    resolver: zodResolver(invoiceSchema),
-    defaultValues: {
-      clientCompanyName: "",
-      clientContactName: "",
-      clientAddress: "",
-      clientEmail: "",
-      items: [{ description: "", hoursWorked: "0" }],
-    },
+  const [settings, setSettings] = useState({
+    companyName: "",
+    address: "",
+    email: "",
+    phone: "",
+    abn: "",
+    hourlyRate: 85,
+    gstRate: 10
   });
-
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "items",
-  });
-
-  const watchedItems = watch("items");
-  const hourlyRate = companySettings?.hourlyRate || 0;
-  const gstRate = companySettings?.gstRate || 10;
 
   useEffect(() => {
-    const settings = getCompanySettings();
-    setCompanySettings(settings);
-    if (settings.hourlyRate <= 0) {
-      setSettingsOpen(true);
-    }
+    fetch("/api/settings")
+      .then(res => res.json())
+      .then(data => {
+        setSettings(data);
+        setGstRate(data.gstRate || 10);
+        setItems([{ id: generateId(), description: "", hoursWorked: 0, hourlyRate: data.hourlyRate || 85 }]);
+      });
   }, []);
 
-  const subtotal = calculateSubtotal(
-    (watchedItems as { description: string; hoursWorked: string }[]).map(
-      (item) => ({ ...item, hoursWorked: parseFloat(item.hoursWorked) || 0 })
-    ),
-    hourlyRate
-  );
-  const gstAmount = calculateGST(subtotal, gstRate);
-  const total = calculateTotal(subtotal, gstAmount);
+  const subtotal = items.reduce((sum, item) => sum + (item.hoursWorked * item.hourlyRate), 0);
+  const gstAmount = subtotal * (gstRate / 100);
+  const total = subtotal + gstAmount;
 
-  const onSubmit = (data: InvoiceFormData) => {
-    const invoiceItems: InvoiceItem[] = data.items.map((item) => ({
-      description: item.description,
-      hoursWorked: parseFloat(item.hoursWorked),
-    }));
+  const updateItem = (id: string, field: keyof LineItem, value: any) => {
+    setItems(prev => prev.map(item => 
+      item.id === id ? { ...item, [field]: value } : item
+    ));
+  };
+
+  const addItem = () => {
+    setItems(prev => [...prev, {
+      id: generateId(),
+      description: "",
+      hoursWorked: 0,
+      hourlyRate: settings.hourlyRate || 85
+    }]);
+  };
+
+  const removeItem = (id: string) => {
+    if (items.length > 1) {
+      setItems(prev => prev.filter(item => item.id !== id));
+    }
+  };
+
+  const isFormValid = client.name.trim() !== "" && items.every(item => item.hoursWorked > 0);
+
+  const handleCreateInvoice = async () => {
+    if (!isFormValid) return;
 
     const invoice: Invoice = {
-      id: crypto.randomUUID(),
-      invoiceNumber: generateInvoiceNumber(),
-      createdAt: new Date(),
-      client: {
-        companyName: data.clientCompanyName,
-        contactName: data.clientContactName,
-        address: data.clientAddress,
-        email: data.clientEmail,
-      },
-      items: invoiceItems,
-      hourlyRate,
-      gstRate,
+      id: generateId(),
+      invoiceNumber,
+      clientId: client.id,
+      clientName: client.name,
+      clientCompany: client.company,
+      clientAddress: client.address,
+      clientEmail: client.email,
+      clientPhone: client.phone,
+      items,
       subtotal,
+      gstRate,
       gstAmount,
       total,
+      status: "pending",
+      paid: false,
+      dueDate,
+      createdAt: new Date().toISOString()
     };
 
-    setCreatedInvoice(invoice);
-    setPreviewOpen(true);
+    try {
+      await fetch("/api/invoices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(invoice)
+      });
+      setCreatedInvoice(invoice);
+    } catch (error) {
+      console.error("Failed to save invoice:", error);
+      setCreatedInvoice(invoice);
+    }
   };
 
   const handleBack = () => {
-    setPreviewOpen(false);
     setCreatedInvoice(null);
   };
 
-  const handleSettingsSaved = () => {
-    const settings = getCompanySettings();
-    setCompanySettings(settings);
+  const handleDownload = () => {
+    window.print();
   };
 
-  if (!companySettings) {
+  const handleEmail = () => {
+    if (!client.email) return;
+    const subject = encodeURIComponent(`Invoice ${invoiceNumber}`);
+    const body = encodeURIComponent(
+      `Dear ${client.name},\n\nPlease find attached invoice ${invoiceNumber} for $${total.toFixed(2)}.\n\nDue: ${dueDate || "Upon receipt"}\n\nThank you for your business.\n\n${settings.companyName}`
+    );
+    window.open(`mailto:${client.email}?subject=${subject}&body=${body}`);
+  };
+
+  if (createdInvoice) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Loading...</p>
+      <div className="min-h-screen bg-gray-100">
+        <div className="max-w-4xl mx-auto p-6">
+          <div className="bg-white rounded-lg shadow-lg p-8">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Invoice {invoiceNumber}</h1>
+                <p className="text-gray-500 mt-1">Created successfully!</p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleBack}
+                  className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
+                >
+                  Back
+                </button>
+                <button
+                  onClick={handleEmail}
+                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                >
+                  Email Invoice
+                </button>
+                <button
+                  onClick={handleDownload}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Download
+                </button>
+              </div>
+            </div>
+
+            <div className="border-t pt-6">
+              <div className="grid grid-cols-2 gap-8">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">From</h3>
+                  <p className="font-medium">{settings.companyName}</p>
+                  <p className="whitespace-pre-line text-sm text-gray-600">{settings.address}</p>
+                  <p className="text-sm text-gray-600">ABN: {settings.abn}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Bill To</h3>
+                  <p className="font-medium">{client.name}</p>
+                  {client.company && <p className="text-sm text-gray-600">{client.company}</p>}
+                  <p className="whitespace-pre-line text-sm text-gray-600">{client.address}</p>
+                </div>
+              </div>
+
+              <table className="w-full mt-6">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-2">Description</th>
+                    <th className="text-right py-2">Hours</th>
+                    <th className="text-right py-2">Rate</th>
+                    <th className="text-right py-2">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map(item => (
+                    <tr key={item.id} className="border-b">
+                      <td className="py-2">{item.description || "Professional services"}</td>
+                      <td className="text-right">{item.hoursWorked}</td>
+                      <td className="text-right">${item.hourlyRate.toFixed(2)}</td>
+                      <td className="text-right">${(item.hoursWorked * item.hourlyRate).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div className="mt-4 text-right">
+                <p>Subtotal: ${subtotal.toFixed(2)}</p>
+                <p>GST ({gstRate}%): ${gstAmount.toFixed(2)}</p>
+                <p className="text-xl font-bold">Total: ${total.toFixed(2)}</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <header className="bg-white border-b">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link
-            href="/"
-            className="flex items-center text-slate-600 hover:text-slate-900 transition-colors"
+    <div className="min-h-screen bg-gray-100">
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Create Invoice</h1>
+          <button
+            onClick={() => router.push("/")}
+            className="px-4 py-2 text-gray-600 hover:text-gray-800"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Invoices
-          </Link>
-          <Button variant="outline" size="sm" onClick={() => setSettingsOpen(true)}>
-            Settings
-          </Button>
+            Cancel
+          </button>
         </div>
-      </header>
 
-      {/* Form */}
-      <main className="max-w-4xl mx-auto px-6 py-8">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-          {/* Client Information */}
-          <div className="bg-white rounded-lg border p-6">
-            <h2 className="text-lg font-semibold mb-4">Client Information</h2>
-            <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="clientCompanyName" required>
-                  Client Company Name
-                </Label>
-                <Input
-                  id="clientCompanyName"
-                  {...register("clientCompanyName")}
-                  error={!!errors.clientCompanyName}
-                  placeholder="Acme Corporation"
-                />
-                {errors.clientCompanyName && (
-                  <p className="text-xs text-red-500">
-                    {errors.clientCompanyName.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="clientContactName" required>
-                  Contact Name
-                </Label>
-                <Input
-                  id="clientContactName"
-                  {...register("clientContactName")}
-                  error={!!errors.clientContactName}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-medium mb-4">Bill To</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Contact Name *</label>
+                <input
+                  type="text"
+                  value={client.name}
+                  onChange={e => setClient({ ...client, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded bg-white text-gray-900"
                   placeholder="John Smith"
                 />
-                {errors.clientContactName && (
-                  <p className="text-xs text-red-500">
-                    {errors.clientContactName.message}
-                  </p>
-                )}
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="clientAddress" required>
-                  Address
-                </Label>
-                <Input
-                  id="clientAddress"
-                  {...register("clientAddress")}
-                  error={!!errors.clientAddress}
-                  placeholder="456 Business Ave, Sydney NSW 2000"
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
+                <input
+                  type="text"
+                  value={client.company}
+                  onChange={e => setClient({ ...client, company: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded bg-white text-gray-900"
+                  placeholder="Acme Pty Ltd"
                 />
-                {errors.clientAddress && (
-                  <p className="text-xs text-red-500">
-                    {errors.clientAddress.message}
-                  </p>
-                )}
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="clientEmail" required>
-                  Email
-                </Label>
-                <Input
-                  id="clientEmail"
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                <textarea
+                  value={client.address}
+                  onChange={e => setClient({ ...client, address: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded bg-white text-gray-900"
+                  rows={3}
+                  placeholder="123 Main Street&#10;Melbourne VIC 3000"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
                   type="email"
-                  {...register("clientEmail")}
-                  error={!!errors.clientEmail}
-                  placeholder="accounts@acme.com.au"
+                  value={client.email}
+                  onChange={e => setClient({ ...client, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded bg-white text-gray-900"
+                  placeholder="client@example.com"
                 />
-                {errors.clientEmail && (
-                  <p className="text-xs text-red-500">
-                    {errors.clientEmail.message}
-                  </p>
-                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                <input
+                  type="tel"
+                  value={client.phone}
+                  onChange={e => setClient({ ...client, phone: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded bg-white text-gray-900"
+                  placeholder="0412 345 678"
+                />
               </div>
             </div>
           </div>
 
-          {/* Line Items */}
-          <div className="bg-white rounded-lg border p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Work Performed</h2>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => append({ description: "", hoursWorked: "0" })}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Line
-              </Button>
-            </div>
-
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-medium mb-4">Invoice Details</h2>
             <div className="space-y-4">
-              {fields.map((field, index) => (
-                <div key={field.id} className="flex gap-4 items-start">
-                  <div className="flex-1 space-y-2">
-                    <Label htmlFor={`items.${index}.description`} required>
-                      Description
-                    </Label>
-                    <Input
-                      {...register(`items.${index}.description`)}
-                      placeholder="Consulting services for..."
-                      error={!!errors.items?.[index]?.description}
-                    />
-                    {errors.items?.[index]?.description && (
-                      <p className="text-xs text-red-500">
-                        {errors.items[index]?.description?.message}
-                      </p>
-                    )}
-                  </div>
-                  <div className="w-32 space-y-2">
-                    <Label htmlFor={`items.${index}.hoursWorked`} required>
-                      Hours
-                    </Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      {...register(`items.${index}.hoursWorked`)}
-                      error={!!errors.items?.[index]?.hoursWorked}
-                    />
-                    {errors.items?.[index]?.hoursWorked && (
-                      <p className="text-xs text-red-500">
-                        {errors.items[index]?.hoursWorked?.message}
-                      </p>
-                    )}
-                  </div>
-                  {fields.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="mt-7"
-                      onClick={() => remove(index)}
-                    >
-                      <Trash2 className="w-4 h-4 text-slate-400" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {errors.items && typeof errors.items.message === "string" && (
-              <p className="text-xs text-red-500 mt-2">{errors.items.message}</p>
-            )}
-          </div>
-
-          {/* Totals */}
-          <div className="bg-white rounded-lg border p-6">
-            <h2 className="text-lg font-semibold mb-4">Invoice Totals</h2>
-            <div className="flex justify-end">
-              <div className="w-72 space-y-3">
-                <div className="flex justify-between py-2 border-b">
-                  <span className="text-slate-600">Subtotal</span>
-                  <span className="font-medium">{formatCurrency(subtotal)}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b">
-                  <span className="text-slate-600">GST ({gstRate}%)</span>
-                  <span className="font-medium">{formatCurrency(gstAmount)}</span>
-                </div>
-                <div className="flex justify-between py-3 bg-slate-900 text-white rounded-md px-4">
-                  <span className="font-semibold">Total Payable</span>
-                  <span className="font-bold">{formatCurrency(total)}</span>
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Invoice Number</label>
+                <input
+                  type="text"
+                  value={invoiceNumber}
+                  readOnly
+                  className="w-full px-3 py-2 border border-gray-200 rounded bg-gray-50 text-gray-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                <input
+                  type="date"
+                  value={dueDate}
+                  onChange={e => setDueDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded bg-white text-gray-900"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">GST Rate (%)</label>
+                <input
+                  type="number"
+                  value={gstRate}
+                  onChange={e => setGstRate(Number(e.target.value))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded bg-white text-gray-900"
+                />
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Submit */}
-          <div className="flex justify-end">
-            <Button type="submit" size="lg">
-              Create Invoice
-            </Button>
+        <div className="mt-6 bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-medium mb-4">Line Items</h2>
+          <table className="w-full">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left py-2 text-sm font-medium text-gray-700">Description</th>
+                <th className="text-right py-2 w-24 text-sm font-medium text-gray-700">Hours</th>
+                <th className="text-right py-2 w-28 text-sm font-medium text-gray-700">Hourly Rate</th>
+                <th className="text-right py-2 w-28 text-sm font-medium text-gray-700">Amount</th>
+                <th className="w-10"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map(item => (
+                <tr key={item.id} className="border-b">
+                  <td className="py-2">
+                    <input
+                      type="text"
+                      value={item.description}
+                      onChange={e => updateItem(item.id, "description", e.target.value)}
+                      className="w-full px-2 py-1 border border-gray-300 rounded bg-white text-gray-900"
+                      placeholder="Plumbing services"
+                    />
+                  </td>
+                  <td className="py-2">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      value={item.hoursWorked}
+                      onChange={e => updateItem(item.id, "hoursWorked", parseFloat(e.target.value) || 0)}
+                      className="w-full px-2 py-1 border border-gray-300 rounded bg-white text-gray-900 text-right"
+                    />
+                  </td>
+                  <td className="py-2">
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={item.hourlyRate}
+                      onChange={e => updateItem(item.id, "hourlyRate", parseFloat(e.target.value) || 0)}
+                      className="w-full px-2 py-1 border border-gray-300 rounded bg-white text-gray-900 text-right"
+                    />
+                  </td>
+                  <td className="py-2 text-right">
+                    ${(item.hoursWorked * item.hourlyRate).toFixed(2)}
+                  </td>
+                  <td className="py-2">
+                    <button
+                      onClick={() => removeItem(item.id)}
+                      className="text-red-600 hover:text-red-800"
+                      disabled={items.length === 1}
+                    >
+                      ×
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <button
+            onClick={addItem}
+            className="mt-4 px-4 py-2 text-blue-600 border border-blue-600 rounded hover:bg-blue-50"
+          >
+            + Add Item
+          </button>
+
+          <div className="mt-6 text-right space-y-1">
+            <p className="text-gray-600">Subtotal: <span className="text-gray-900">${subtotal.toFixed(2)}</span></p>
+            <p className="text-gray-600">GST ({gstRate}%): <span className="text-gray-900">${gstAmount.toFixed(2)}</span></p>
+            <p className="text-xl font-bold text-gray-900">Total: ${total.toFixed(2)}</p>
           </div>
-        </form>
-      </main>
+        </div>
 
-      <SettingsModal
-        isOpen={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        onSave={handleSettingsSaved}
-      />
-
-      {createdInvoice && (
-        <InvoiceModal
-          isOpen={previewOpen}
-          onClose={() => setPreviewOpen(false)}
-          onBack={handleBack}
-          invoice={createdInvoice}
-        />
-      )}
+        <div className="mt-6 flex justify-end">
+          <button
+            onClick={handleCreateInvoice}
+            disabled={!isFormValid}
+            className={`px-6 py-3 rounded font-medium ${
+              isFormValid
+                ? "bg-blue-600 text-white hover:bg-blue-700"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
+          >
+            Create Invoice
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
