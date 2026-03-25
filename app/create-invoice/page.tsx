@@ -87,7 +87,7 @@ export default function CreateInvoice() {
     const invoice: Invoice = {
       id: generateId(),
       invoiceNumber,
-      clientId: client.id,
+      clientId: client.id || generateId(),
       clientName: client.name,
       clientCompany: client.company,
       clientAddress: client.address,
