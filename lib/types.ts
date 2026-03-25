@@ -27,14 +27,21 @@ export interface InvoiceItem {
 export interface Invoice {
   id: string;
   invoiceNumber: string;
-  createdAt: Date;
-  client: ClientInfo;
+  createdAt: string;
+  clientId: string;
+  clientName: string;
+  clientCompany: string;
+  clientAddress: string;
+  clientEmail: string;
+  clientPhone: string;
   items: InvoiceItem[];
-  hourlyRate: number; // Captured at time of creation
-  gstRate: number;
   subtotal: number;
+  gstRate: number;
   gstAmount: number;
   total: number;
+  status: string;
+  paid: boolean;
+  dueDate: string;
 }
 
 export interface InvoiceFormData {
