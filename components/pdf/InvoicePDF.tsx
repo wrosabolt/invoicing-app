@@ -186,11 +186,11 @@ export function InvoicePDF({ invoice, companySettings }: InvoicePDFProps) {
             <View style={styles.billToDetails}>
               <Text style={styles.sectionTitle}>Bill To</Text>
               <Text style={{ fontSize: 11, fontWeight: "bold", marginBottom: 4 }}>
-                {invoice.client?.companyName}
+                {invoice.clientCompany}
               </Text>
-              <Text style={styles.detailRow}>{invoice.client?.contactName}</Text>
-              <Text style={styles.detailRow}>{invoice.client?.address}</Text>
-              <Text style={styles.detailRow}>{invoice.client?.email}</Text>
+              <Text style={styles.detailRow}>{invoice.clientName}</Text>
+              <Text style={styles.detailRow}>{invoice.clientAddress}</Text>
+              <Text style={styles.detailRow}>{invoice.clientEmail}</Text>
             </View>
             <View style={styles.dateDetails}>
               <Text style={styles.sectionTitle}>Date</Text>
