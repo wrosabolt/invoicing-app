@@ -57,15 +57,19 @@ const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       const t = token as any;
-      if (session.user) {
-        session.user.id = t.id;
-        session.user.name = t.name;
-        session.user.email = t.email;
-        (session.user as any).companyName = t.companyName;
-        (session.user as any).hourlyRate = t.hourlyRate;
-        (session.user as any).gstRate = t.gstRate;
-      }
-      return session;
+      // Return a new session object with our custom properties
+      return {
+        expires: session.expires,
+        user: {
+          id: t.id as string,
+          name: t.name as string,
+          email: t.email as string,
+          image: null as string | null,
+          companyName: t.companyName as string,
+          hourlyRate: t.hourlyRate as number,
+          gstRate: t.gstRate as number
+        }
+      } as any;
     }
   }
 };
