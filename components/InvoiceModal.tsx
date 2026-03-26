@@ -5,7 +5,7 @@ import type { Invoice, ClientInfo } from "@/lib/types";
 
 interface Props {
   invoice: Invoice;
-  client: ClientInfo;
+  client: ClientInfo | null | undefined;
   onClose: () => void;
   onSave: () => void;
   onEmail: () => void;
