@@ -24,6 +24,11 @@ export interface InvoiceItem {
   hourlyRate?: number;
 }
 
+// Input version allows undefined/null during form input
+export type InvoiceItemInput = Omit<InvoiceItem, 'description'> & {
+  description: string | undefined | null;
+};
+
 export interface Invoice {
   id: string;
   invoiceNumber: string;
