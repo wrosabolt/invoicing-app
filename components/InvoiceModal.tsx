@@ -97,9 +97,9 @@ VIC 3062</p>
                 <tr key={item.id} className="border-b border-gray-200">
                   <td className="py-3 text-gray-900">{item.description || "Professional services"}</td>
                   <td className="py-3 text-right text-gray-900">{item.hoursWorked}</td>
-                  <td className="py-3 text-right text-gray-900">${item.hourlyRate.toFixed(2)}</td>
+                  <td className="py-3 text-right text-gray-900">${item.hourlyRate?.toFixed(2)}</td>
                   <td className="py-3 text-right text-gray-900">
-                    ${(item.hoursWorked * item.hourlyRate).toFixed(2)}
+                    ${(item.hoursWorked * (item.hourlyRate || 0)).toFixed(2)}
                   </td>
                 </tr>
               ))}
