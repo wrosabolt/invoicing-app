@@ -75,11 +75,11 @@ VIC 3062</p>
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-500 uppercase mb-2">Bill To</h3>
-              <p className="font-medium text-gray-900">{client.name}</p>
-              {client.company && <p className="text-sm text-gray-600">{client.company}</p>}
-              <p className="text-sm text-gray-600 whitespace-pre-line">{client.address}</p>
-              {client.email && <p className="text-sm text-gray-600">{client.email}</p>}
-              {client.phone && <p className="text-sm text-gray-600">{client.phone}</p>}
+              <p className="font-medium text-gray-900">{client?.name || "Unknown"}</p>
+              {client?.company && <p className="text-sm text-gray-600">{client.company}</p>}
+              <p className="text-sm text-gray-600 whitespace-pre-line">{client?.address}</p>
+              {client?.email && <p className="text-sm text-gray-600">{client.email}</p>}
+              {client?.phone && <p className="text-sm text-gray-600">{client.phone}</p>}
             </div>
           </div>
 
