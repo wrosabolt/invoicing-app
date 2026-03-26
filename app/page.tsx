@@ -2,19 +2,24 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import InvoiceModal from "@/components/InvoiceModal";
 import type { Invoice, ClientInfo, InvoiceItem } from "@/lib/types";
+import { Plus, Settings, LogOut, FileText } from "lucide-react";
 
 export default function Home() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [client, setClient] = useState<ClientInfo | null>(null);
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    fetchInvoices();
-  }, []);
+    if (status === "authenticated") {
+      fetchInvoices();
+    }
+  }, [status]);
 
   const fetchInvoices = async () => {
     try {
@@ -48,124 +53,162 @@ export default function Home() {
 
   const handleSaveAndDownload = async () => {
     if (!selectedInvoice) return;
-    setShowModal(false);
     window.print();
   };
 
   const handleEmail = () => {
-    if (!selectedInvoice || !client) return;
+    if (!selectedInvoice?.clientEmail) return;
     const subject = encodeURIComponent(`Invoice ${selectedInvoice.invoiceNumber}`);
-    const body = encodeURIComponent(
-      `Dear ${client.name},\n\nPlease find attached invoice ${selectedInvoice.invoiceNumber} for $${selectedInvoice.total.toFixed(2)}.\n\nDue: ${selectedInvoice.dueDate || "Upon receipt"}\n\nThank you for your business.\n\nRosa Plumbing`
-    );
-    const mailtoLink = `mailto:${client.email}?subject=${subject}&body=${body}`;
-    window.open(mailtoLink);
+    const body = encodeURIComponent(`Please find invoice ${selectedInvoice.invoiceNumber} attached.`);
+    window.open(`mailto:${selectedInvoice.clientEmail}?subject=${subject}&body=${body}`);
   };
 
-  const handleBack = () => {
-    setShowModal(false);
-    setSelectedInvoice(null);
-    setClient(null);
-  };
-
-  const togglePaid = async (id: string, currentPaid: boolean) => {
+  const handlePaidChange = async (invoice: Invoice, paid: boolean) => {
     try {
-      await fetch(`/api/invoices/${id}`, {
-        method: "PUT",
+      await fetch(`/api/invoices/${invoice.id}`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ paid: !currentPaid })
+        body: JSON.stringify({ paid }),
       });
-      setInvoices(prev =>
-        prev.map(inv => inv.id === id ? { ...inv, paid: !currentPaid } : inv)
-      );
-      if (selectedInvoice?.id === id) {
-        setSelectedInvoice(prev => prev ? { ...prev, paid: !currentPaid } : null);
+      fetchInvoices();
+      if (selectedInvoice?.id === invoice.id) {
+        setSelectedInvoice({ ...selectedInvoice, paid });
       }
     } catch (error) {
       console.error("Failed to update paid status:", error);
     }
   };
 
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return "-";
-    const d = new Date(dateStr);
-    return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
-  };
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <div className="max-w-6xl mx-auto p-6">
-        <h1 className="text-3xl font-bold mb-6 text-gray-900">Invoices</h1>
-        
-        <button
-          onClick={() => router.push("/create-invoice")}
-          className="mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          + Create Invoice
-        </button>
-
-        {invoices.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
-            No invoices yet. Create your first invoice to get started.
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <h1 className="text-2xl font-bold text-gray-900">Invoices</h1>
+              {session?.user?.companyName && (
+                <span className="text-sm text-gray-500">| {session.user.companyName}</span>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-600">
+                Welcome, {session?.user?.name}
+              </span>
+              <button
+                onClick={() => router.push("/settings")}
+                className="p-2 text-gray-600 hover:text-indigo-600 transition-colors"
+                title="Settings"
+              >
+                <Settings className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => signOut({ callbackUrl: "/login" })}
+                className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </button>
+            </div>
           </div>
-        ) : (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <table className="min-w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Invoice #</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Due</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total</th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Paid</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {invoices.map((invoice) => (
-                  <tr
-                    key={invoice.id}
-                    onClick={() => handleRowClick(invoice)}
-                    className="hover:bg-gray-50 cursor-pointer"
-                  >
-                    <td className="px-4 py-3 text-sm font-medium text-blue-600">{invoice.invoiceNumber}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{invoice.clientName}</td>
-                    <td className="px-4 py-3 text-sm text-gray-500">{formatDate(invoice.createdAt)}</td>
-                    <td className="px-4 py-3 text-sm text-gray-500">{formatDate(invoice.dueDate)}</td>
-                    <td className="px-4 py-3 text-sm text-right text-gray-900">${invoice.total.toFixed(2)}</td>
-                    <td className="px-4 py-3 text-center">
-                      <span className={`px-2 py-1 text-xs rounded ${
-                        invoice.paid ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
-                      }`}>
-                        {invoice.paid ? "Paid" : "Pending"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <input
-                        type="checkbox"
-                        checked={invoice.paid || false}
-                        onChange={(e) => {
-                          e.stopPropagation();
-                          togglePaid(invoice.id, invoice.paid || false);
-                        }}
-                        className="w-5 h-5 rounded border-gray-300"
-                      />
-                    </td>
+        </div>
+      </header>
+
+      {/* Main content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-white rounded-lg shadow">
+          <div className="p-6 border-b flex justify-between items-center">
+            <div>
+              <h2 className="text-lg font-medium text-gray-900">All Invoices</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                {invoices.length} invoice{invoices.length !== 1 ? "s" : ""} total
+              </p>
+            </div>
+            <button
+              onClick={() => router.push("/create-invoice")}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Create Invoice
+            </button>
+          </div>
+
+          {invoices.length === 0 ? (
+            <div className="p-12 text-center">
+              <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 mb-4">No invoices yet</p>
+              <button
+                onClick={() => router.push("/create-invoice")}
+                className="text-indigo-600 hover:text-indigo-800 font-medium"
+              >
+                Create your first invoice
+              </button>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Invoice #</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Paid</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {invoices.map((invoice) => (
+                    <tr
+                      key={invoice.id}
+                      onClick={() => handleRowClick(invoice)}
+                      className="hover:bg-gray-50 cursor-pointer transition-colors"
+                    >
+                      <td className="px-6 py-4 text-sm font-medium text-indigo-600">
+                        {invoice.invoiceNumber}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        {invoice.clientName}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {new Date(invoice.createdAt).toLocaleDateString("en-AU")}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900 text-right">
+                        ${invoice.total.toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4 text-center" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={invoice.paid}
+                          onChange={(e) => handlePaidChange(invoice, e.target.checked)}
+                          className="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </main>
 
-      {showModal && selectedInvoice && client && (
+      {showModal && selectedInvoice && (
         <InvoiceModal
           invoice={selectedInvoice}
           client={client}
-          onClose={handleBack}
-          onSave={handleSaveAndDownload}
+          onClose={() => setShowModal(false)}
+          onSaveAndDownload={handleSaveAndDownload}
           onEmail={handleEmail}
         />
       )}
