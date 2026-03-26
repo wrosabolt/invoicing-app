@@ -7,11 +7,11 @@ interface Props {
   invoice: Invoice;
   client: ClientInfo | null | undefined;
   onClose: () => void;
-  onSave: () => void;
+  onSaveAndDownload: () => void | Promise<void>;
   onEmail: () => void;
 }
 
-export default function InvoiceModal({ invoice, client, onClose, onSave, onEmail }: Props) {
+export default function InvoiceModal({ invoice, client, onClose, onSaveAndDownload, onEmail }: Props) {
   const printRef = useRef<HTMLDivElement>(null);
 
   return (
@@ -33,7 +33,7 @@ export default function InvoiceModal({ invoice, client, onClose, onSave, onEmail
               Email
             </button>
             <button
-              onClick={onSave}
+              onClick={onSaveAndDownload}
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             >
               Save & Download
