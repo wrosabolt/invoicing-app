@@ -338,7 +338,7 @@ export default function CreateInvoice() {
                     <input
                       type="text"
                       value={item.description || ""}
-                      onChange={e => updateItem(item.id, "description", String(e.target.value ?? ""))}
+                      onChange={e => { const v = e.target.value ?? ""; updateItem(item.id, "description", v); }}
                       className="w-full px-2 py-1 border border-gray-300 rounded bg-white text-gray-900"
                       placeholder="Plumbing services"
                     />
