@@ -194,7 +194,7 @@ export function InvoicePDF({ invoice, companySettings }: InvoicePDFProps) {
             </View>
             <View style={styles.dateDetails}>
               <Text style={styles.sectionTitle}>Date</Text>
-              <Text style={{ fontSize: 11 }}>{formatDate(invoice.createdAt)}</Text>
+              <Text style={{ fontSize: 11 }}>{formatDate(new Date(invoice.createdAt))}</Text>
             </View>
           </View>
         </View>
