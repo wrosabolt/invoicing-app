@@ -339,8 +339,8 @@ export default function CreateInvoice() {
                       type="text"
                       value={item.description || ""}
                       onChange={e => {
-                        const val = e.target.value;
-                        updateItem(item.id, "description", val === undefined ? "" : val);
+                        const val: string = e.target.value || "";
+                        updateItem(item.id, "description", val);
                       }}
                       className="w-full px-2 py-1 border border-gray-300 rounded bg-white text-gray-900"
                       placeholder="Plumbing services"
