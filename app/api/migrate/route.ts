@@ -4,11 +4,19 @@ import { Pool } from 'pg';
 const pool = new Pool({ connectionString: process.env.PG_URL });
 
 export async function GET() {
+  const client = await pool.connect();
+  
   try {
-    const client = await pool.connect();
+    await client.query('BEGIN');
     
+    // Drop tables in reverse order (remove foreign key constraints)
+    await client.query('DROP TABLE IF EXISTS invoices');
+    await client.query('DROP TABLE IF EXISTS clients');
+    await client.query('DROP TABLE IF EXISTS users');
+    
+    // Create users table first
     await client.query(`
-      CREATE TABLE IF NOT EXISTS users (
+      CREATE TABLE users (
         id TEXT PRIMARY KEY,
         email TEXT UNIQUE NOT NULL,
         name TEXT,
@@ -24,10 +32,11 @@ export async function GET() {
       )
     `);
 
+    // Create clients table
     await client.query(`
-      CREATE TABLE IF NOT EXISTS clients (
+      CREATE TABLE clients (
         id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         name TEXT NOT NULL,
         company TEXT,
         email TEXT,
@@ -37,11 +46,12 @@ export async function GET() {
       )
     `);
 
+    // Create invoices table last
     await client.query(`
-      CREATE TABLE IF NOT EXISTS invoices (
+      CREATE TABLE invoices (
         id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        client_id TEXT,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        client_id TEXT REFERENCES clients(id) ON DELETE SET NULL,
         invoice_number TEXT UNIQUE NOT NULL,
         items JSONB NOT NULL DEFAULT '[]',
         subtotal NUMERIC NOT NULL DEFAULT 0,
@@ -51,15 +61,17 @@ export async function GET() {
         status TEXT DEFAULT 'draft',
         paid BOOLEAN DEFAULT FALSE,
         due_date DATE,
-        created_at TIMESTAMP DEFAULT NOW(),
-        FOREIGN KEY (user_id) REFERENCES users(id),
-        FOREIGN KEY (client_id) REFERENCES clients(id)
+        created_at TIMESTAMP DEFAULT NOW()
       )
     `);
 
+    await client.query('COMMIT');
     client.release();
-    return NextResponse.json({ success: true, message: 'Tables created!' });
+    
+    return NextResponse.json({ success: true, message: 'Tables migrated successfully!' });
   } catch (error: any) {
+    await client.query('ROLLBACK');
+    client.release();
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
