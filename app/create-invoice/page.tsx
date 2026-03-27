@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 interface ClientInfo {
@@ -35,9 +35,20 @@ export default function CreateInvoice() {
     email: "",
     phone: "",
   });
-  const [items, setItems] = useState<InvoiceItem[]>([
-    { description: "", hoursWorked: 0, hourlyRate: 85 }
-  ]);
+  const [items, setItems] = useState<InvoiceItem[]>([]);
+  const [settings, setSettings] = useState<any>(null);
+  
+  useEffect(() => {
+    fetch("/api/settings")
+      .then(r => r.json())
+      .then(data => {
+        setSettings(data);
+        setItems([{ description: "", hoursWorked: 0, hourlyRate: data.hourlyRate || 85 }]);
+      })
+      .catch(() => {
+        setItems([{ description: "", hoursWorked: 0, hourlyRate: 85 }]);
+      });
+  }, []);
   const [gstRate, setGstRate] = useState(10);
   const [showPreview, setShowPreview] = useState(false);
 
@@ -54,7 +65,8 @@ export default function CreateInvoice() {
   };
 
   const addItem = () => {
-    setItems(prev => [...prev, { description: "", hoursWorked: 0, hourlyRate: 85 }]);
+    const rate = settings?.hourlyRate || 85;
+    setItems(prev => [...prev, { description: "", hoursWorked: 0, hourlyRate: rate }]);
   };
 
   const removeItem = (index: number) => {
