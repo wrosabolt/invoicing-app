@@ -39,8 +39,8 @@ export default function Login() {
       <div className="absolute inset-0 animate-gradient bg-gradient-to-br from-indigo-900 via-purple-800 to-pink-700 opacity-90" />
       
       {/* Floating orbs - hidden on mobile for performance */}
-      <div className="hidden md:block absolute top-10 left-10 w-64 h-64 md:w-72 md:h-72 bg-purple-500/30 rounded-full blur-3xl animate-float" />
-      <div className="hidden md:block absolute bottom-10 right-10 w-72 h-72 md:w-96 md:h-96 bg-pink-500/20 rounded-full blur-3xl animate-float-delayed" />
+      <div className="hidden md:block absolute top-10 left-10 w-64 h-64 md:w-72 md:h-72 bg-purple-500/30 rounded-full blur-3xl" style={{ animation: 'float 6s ease-in-out infinite' }} />
+      <div className="hidden md:block absolute bottom-10 right-10 w-72 h-72 md:w-96 md:h-96 bg-pink-500/20 rounded-full blur-3xl" style={{ animation: 'float-delayed 8s ease-in-out infinite' }} />
       <div className="hidden lg:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-60 h-60 md:w-80 md:h-80 bg-blue-500/20 rounded-full blur-3xl" />
       
       {/* Grid pattern overlay */}
@@ -133,8 +133,8 @@ export default function Login() {
             </button>
           </form>
 
-          <div className="mt-4 md:mt-6 text-center">
-            <p className="text-purple-200 text-sm">
+          <div className="mt-6 text-center">
+            <p className="text-purple-200">
               Don&apos;t have an account?{" "}
               <Link 
                 href="/signup" 
@@ -145,38 +145,7 @@ export default function Login() {
             </p>
           </div>
         </div>
-        
-        {/* Footer */}
-        <p className="text-center text-purple-300/60 text-xs mt-4 md:mt-6">
-          WayNueng Small Business Media
-        </p>
       </div>
-
-      <style jsx global>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-20px) rotate(5deg); }
-        }
-        @keyframes float-delayed {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(20px) rotate(-5deg); }
-        }
-        .animate-float {
-          animation: float 6s ease-in-out infinite;
-        }
-        .animate-float-delayed {
-          animation: float-delayed 8s ease-in-out infinite;
-        }
-        .animate-gradient {
-          background-size: 400% 400%;
-          animation: gradient 15s ease infinite;
-        }
-        @keyframes gradient {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-      `}</style>
     </div>
   );
 }
