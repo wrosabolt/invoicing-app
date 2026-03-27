@@ -1,7 +1,5 @@
-"use client";
-
 import type { Metadata } from "next";
-import { SessionProvider } from "next-auth/react";
+import SessionProvider from "@/components/providers/SessionProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -12,9 +10,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <SessionProvider>
-        <body className="antialiased">{children}</body>
-      </SessionProvider>
+      <body className="antialiased">
+        <SessionProvider>
+          {children}
+        </SessionProvider>
+      </body>
     </html>
   );
 }
