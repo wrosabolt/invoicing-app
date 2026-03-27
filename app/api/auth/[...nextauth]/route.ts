@@ -25,7 +25,7 @@ const authOptions: NextAuthOptions = {
         const user = result.rows[0];
         if (!user) return null;
         
-        const isValid = await bcrypt.compare(credentials.password, user.password_hash);
+        const isValid = await bcrypt.compare(credentials.password, user.password);
         if (!isValid) return null;
         
         return {
