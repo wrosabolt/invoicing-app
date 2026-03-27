@@ -14,12 +14,26 @@ export default function Home() {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [client, setClient] = useState<ClientInfo | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [settings, setSettings] = useState({ companyName: "", address: "", email: "", phone: "", abn: "" });
 
   useEffect(() => {
     if (status === "authenticated") {
       fetchInvoices();
+      fetchSettings();
     }
   }, [status]);
+
+  const fetchSettings = async () => {
+    try {
+      const res = await fetch("/api/settings");
+      if (res.ok) {
+        const data = await res.json();
+        setSettings(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch settings:", error);
+    }
+  };
 
   const fetchInvoices = async () => {
     try {
@@ -205,6 +219,7 @@ export default function Home() {
 
       {showModal && selectedInvoice && (
         <InvoiceModal
+          companySettings={settings}
           invoice={selectedInvoice}
           client={client}
           onClose={() => setShowModal(false)}

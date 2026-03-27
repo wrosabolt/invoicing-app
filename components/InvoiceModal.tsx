@@ -6,12 +6,19 @@ import type { Invoice, ClientInfo } from "@/lib/types";
 interface Props {
   invoice: Invoice;
   client: ClientInfo | null | undefined;
+  companySettings: {
+    companyName: string;
+    address: string;
+    email: string;
+    phone: string;
+    abn: string;
+  };
   onClose: () => void;
   onSaveAndDownload: () => void | Promise<void>;
   onEmail: () => void;
 }
 
-export default function InvoiceModal({ invoice, client, onClose, onSaveAndDownload, onEmail }: Props) {
+export default function InvoiceModal({ invoice, client, companySettings, onClose, onSaveAndDownload, onEmail }: Props) {
   const printRef = useRef<HTMLDivElement>(null);
 
   return (
@@ -65,13 +72,11 @@ export default function InvoiceModal({ invoice, client, onClose, onSaveAndDownlo
           <div className="grid grid-cols-2 gap-8 mb-8">
             <div>
               <h3 className="text-sm font-medium text-gray-500 uppercase mb-2">From</h3>
-              <p className="font-medium text-gray-900">Rosa Plumbing</p>
-              <p className="text-sm text-gray-600 whitespace-pre-line">14 Emily Street
-Somerton
-VIC 3062</p>
-              <p className="text-sm text-gray-600">ABN: 86 659 791 662</p>
-              <p className="text-sm text-gray-600">rosaplumbing@outlook.com</p>
-              <p className="text-sm text-gray-600">0419 140 793</p>
+              <p className="font-medium text-gray-900">{companySettings.companyName}</p>
+              <p className="text-sm text-gray-600 whitespace-pre-line">{companySettings.address}</p>
+              {companySettings.abn && <p className="text-sm text-gray-600">ABN: {companySettings.abn}</p>}
+              {companySettings.email && <p className="text-sm text-gray-600">{companySettings.email}</p>}
+              {companySettings.phone && <p className="text-sm text-gray-600">{companySettings.phone}</p>}
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-500 uppercase mb-2">Bill To</h3>
