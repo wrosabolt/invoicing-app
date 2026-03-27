@@ -1,36 +1,20 @@
+"use client";
+
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
 import { SessionProvider } from "next-auth/react";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "WayNueng Invoicing",
-  description: "Professional invoicing for your business",
+  title: "Invoicing App",
+  description: "Professional invoicing for tradies",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">
-        <SessionProvider>{children}</SessionProvider>
-      </body>
+    <html lang="en">
+      <SessionProvider>
+        <body className="antialiased">{children}</body>
+      </SessionProvider>
     </html>
   );
 }
