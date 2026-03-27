@@ -42,7 +42,7 @@ export default function Settings() {
     setSaving(true);
     try {
       const res = await fetch("/api/settings", {
-        method: "PUT",
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ companyName, address, email, phone, abn, hourlyRate: parseFloat(hourlyRate) || 0, gstRate: parseFloat(gstRate) || 10 }),
       });
