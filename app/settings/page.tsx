@@ -1,0 +1,1 @@
+export default function Settings(){return <div style={{padding:40,color:"white",background:"linear-gradient(135deg,#1e1b4b,#581c87,#be1857)",minHeight:"100vh"}}><h1>Company Settings</h1><p>Form coming soon...</p></div>}
