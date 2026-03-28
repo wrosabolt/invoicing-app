@@ -89,7 +89,7 @@ export async function POST(
     // Generate PDF
     const pdfBuffer = await renderToBuffer(
       createElement(InvoicePDF, { invoice: invoice as any, companySettings }) as
-        ReactElement<DocumentProps, JSXElementConstructor<DocumentProps>>
+        unknown as ReactElement<DocumentProps, JSXElementConstructor<DocumentProps>>
     );
 
     const clientName = row.client_company || row.client_name || 'Client';
