@@ -214,14 +214,14 @@ export default function AdminPage() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[600px]">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Company</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ABN</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Rate</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden md:table-cell">ABN</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase hidden sm:table-cell">Rate</th>
                   <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Joined</th>
                   <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Actions</th>
                 </tr>
@@ -237,8 +237,8 @@ export default function AdminPage() {
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">{user.email}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{user.company_name || "—"}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{user.abn || "—"}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900 text-right">${user.hourly_rate}/hr</td>
+                    <td className="px-6 py-4 text-sm text-gray-600 hidden md:table-cell">{user.abn || "—"}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900 text-right hidden sm:table-cell">${user.hourly_rate}/hr</td>
                     <td className="px-6 py-4 text-sm text-gray-500 text-center">
                       {new Date(user.created_at).toLocaleDateString("en-AU")}
                     </td>

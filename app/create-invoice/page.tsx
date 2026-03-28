@@ -413,43 +413,89 @@ function CreateInvoiceForm() {
         {/* Line Items */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <h2 className="text-lg font-medium mb-4">Line Items</h2>
-          <div className="grid grid-cols-[1fr_90px_110px_80px] gap-2 mb-1">
+
+          {/* Desktop header */}
+          <div className="hidden sm:grid sm:grid-cols-[1fr_90px_110px_80px] gap-2 mb-1">
             <span className="text-sm font-medium text-gray-600 px-3">Description</span>
             <span className="text-sm font-medium text-gray-600 px-3">Hours</span>
             <span className="text-sm font-medium text-gray-600 px-3">Rate ($/hr)</span>
             <span></span>
           </div>
+
           {items.map((item, index) => (
-            <div key={index} className="grid grid-cols-[1fr_90px_110px_80px] gap-2 mb-2">
-              <input
-                type="text"
-                placeholder="Description of work"
-                value={item.description}
-                onChange={e => updateItem(index, "description", e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded bg-white text-gray-900"
-              />
-              <input
-                type="text"
-                inputMode="decimal"
-                placeholder=""
-                value={item.hoursWorked === 0 ? "" : item.hoursWorked}
-                onChange={e => updateItem(index, "hoursWorked", parseFloat(e.target.value) || 0)}
-                className="px-3 py-2 border border-gray-300 rounded bg-white text-gray-900 text-right"
-              />
-              <input
-                type="text"
-                inputMode="decimal"
-                value={item.hourlyRate === 0 ? "" : item.hourlyRate}
-                onChange={e => updateItem(index, "hourlyRate", parseFloat(e.target.value) || 0)}
-                className="px-3 py-2 border border-gray-300 rounded bg-white text-gray-900 text-right"
-              />
-              <button
-                onClick={() => removeItem(index)}
-                disabled={items.length === 1}
-                className="px-2 py-2 text-sm text-red-600 hover:bg-red-50 rounded disabled:opacity-30"
-              >
-                Remove
-              </button>
+            <div key={index} className="mb-3">
+              {/* Mobile: card layout */}
+              <div className="sm:hidden border border-gray-200 rounded-lg p-3 space-y-2">
+                <input
+                  type="text"
+                  placeholder="Description of work"
+                  value={item.description}
+                  onChange={e => updateItem(index, "description", e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded bg-white text-gray-900 text-sm"
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Hours</label>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="0"
+                      value={item.hoursWorked === 0 ? "" : item.hoursWorked}
+                      onChange={e => updateItem(index, "hoursWorked", parseFloat(e.target.value) || 0)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded bg-white text-gray-900 text-right text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Rate ($/hr)</label>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={item.hourlyRate === 0 ? "" : item.hourlyRate}
+                      onChange={e => updateItem(index, "hourlyRate", parseFloat(e.target.value) || 0)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded bg-white text-gray-900 text-right text-sm"
+                    />
+                  </div>
+                </div>
+                <button
+                  onClick={() => removeItem(index)}
+                  disabled={items.length === 1}
+                  className="text-sm text-red-600 hover:bg-red-50 px-2 py-1 rounded disabled:opacity-30"
+                >
+                  Remove
+                </button>
+              </div>
+              {/* Desktop: grid layout */}
+              <div className="hidden sm:grid sm:grid-cols-[1fr_90px_110px_80px] gap-2">
+                <input
+                  type="text"
+                  placeholder="Description of work"
+                  value={item.description}
+                  onChange={e => updateItem(index, "description", e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded bg-white text-gray-900"
+                />
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder=""
+                  value={item.hoursWorked === 0 ? "" : item.hoursWorked}
+                  onChange={e => updateItem(index, "hoursWorked", parseFloat(e.target.value) || 0)}
+                  className="px-3 py-2 border border-gray-300 rounded bg-white text-gray-900 text-right"
+                />
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={item.hourlyRate === 0 ? "" : item.hourlyRate}
+                  onChange={e => updateItem(index, "hourlyRate", parseFloat(e.target.value) || 0)}
+                  className="px-3 py-2 border border-gray-300 rounded bg-white text-gray-900 text-right"
+                />
+                <button
+                  onClick={() => removeItem(index)}
+                  disabled={items.length === 1}
+                  className="px-2 py-2 text-sm text-red-600 hover:bg-red-50 rounded disabled:opacity-30"
+                >
+                  Remove
+                </button>
+              </div>
             </div>
           ))}
           <button onClick={addItem} className="mt-2 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">

@@ -116,8 +116,8 @@ export default function Home() {
                 <span className="text-sm text-gray-500">| {(session?.user as any).companyName}</span>
               )}
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-600">
+            <div className="flex items-center gap-2 flex-wrap justify-end">
+              <span className="hidden sm:inline text-sm text-gray-600">
                 Welcome, {session?.user?.name}
               </span>
               {(session?.user as any)?.isAdmin && (
@@ -127,7 +127,7 @@ export default function Home() {
                   title="Admin Panel"
                 >
                   <ShieldCheck className="w-4 h-4" />
-                  Admin
+                  <span className="hidden sm:inline">Admin</span>
                 </button>
               )}
               <button
@@ -139,10 +139,10 @@ export default function Home() {
               </button>
               <button
                 onClick={() => signOut({ callbackUrl: "/login" })}
-                className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
               >
                 <LogOut className="w-4 h-4" />
-                Sign Out
+                <span className="hidden sm:inline">Sign Out</span>
               </button>
             </div>
           </div>
@@ -164,7 +164,7 @@ export default function Home() {
               className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
             >
               <Plus className="w-4 h-4" />
-              Create Invoice
+              <span className="hidden sm:inline">Create Invoice</span>
             </button>
           </div>
 
@@ -186,7 +186,7 @@ export default function Home() {
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Invoice #</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden sm:table-cell">Date</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Paid</th>
                   </tr>
@@ -204,7 +204,7 @@ export default function Home() {
                       <td className="px-6 py-4 text-sm text-gray-900">
                         {invoice.clientName}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
+                      <td className="px-6 py-4 text-sm text-gray-500 hidden sm:table-cell">
                         {new Date(invoice.createdAt).toLocaleDateString("en-AU")}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900 text-right">
