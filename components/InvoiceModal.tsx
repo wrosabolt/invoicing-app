@@ -18,7 +18,7 @@ interface Props {
   onSaveAndDownload: () => void | Promise<void>;
 }
 
-export default function InvoiceModal({ invoice, client, companySettings, onClose, onSaveAndDownload, onEmail }: Props) {
+export default function InvoiceModal({ invoice, client, companySettings, onClose, onSaveAndDownload }: Props) {
   const router = useRouter();
   const printRef = useRef<HTMLDivElement>(null);
   const [emailStatus, setEmailStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
