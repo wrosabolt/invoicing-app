@@ -20,14 +20,19 @@ export async function GET() {
         id TEXT PRIMARY KEY,
         email TEXT UNIQUE NOT NULL,
         name TEXT,
+        password TEXT NOT NULL,
         company_name TEXT,
         company_address TEXT,
         company_email TEXT,
         company_phone TEXT,
-        company_abn TEXT,
+        abn TEXT,
         company_logo TEXT,
         hourly_rate NUMERIC DEFAULT 0,
         gst_rate NUMERIC DEFAULT 10,
+        invoice_start_number INTEGER DEFAULT 1,
+        smtp_password TEXT,
+        smtp_host TEXT,
+        smtp_port INTEGER DEFAULT 587,
         created_at TIMESTAMP DEFAULT NOW()
       )
     `);
@@ -61,6 +66,8 @@ export async function GET() {
         status TEXT DEFAULT 'draft',
         paid BOOLEAN DEFAULT FALSE,
         due_date DATE,
+        start_date DATE,
+        end_date DATE,
         created_at TIMESTAMP DEFAULT NOW()
       )
     `);

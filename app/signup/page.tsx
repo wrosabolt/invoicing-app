@@ -25,6 +25,7 @@ export default function Signup() {
   const [abn, setAbn] = useState("");
   const [hourlyRate, setHourlyRate] = useState("85");
   const [gstRate, setGstRate] = useState("10");
+  const [invoiceStartNumber, setInvoiceStartNumber] = useState("1");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +48,7 @@ export default function Signup() {
             abn,
             hourlyRate: parseFloat(hourlyRate) || 85,
             gstRate: parseFloat(gstRate) || 10,
+            invoiceStartNumber: parseInt(invoiceStartNumber) || 1,
           },
         }),
       });
@@ -84,6 +86,7 @@ export default function Signup() {
                 src="/logo.png"
                 alt="WayNueng Media"
                 fill
+                sizes="112px"
                 className="object-contain drop-shadow-2xl"
                 priority
               />
@@ -260,6 +263,22 @@ export default function Signup() {
                       />
                     </div>
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-purple-200 mb-2">Invoice Starting Number</label>
+                  <div className="relative">
+                    <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-300" />
+                    <input
+                      type="number"
+                      value={invoiceStartNumber}
+                      onChange={(e) => setInvoiceStartNumber(e.target.value)}
+                      className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-purple-300/50 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent"
+                      placeholder="1"
+                      min="1"
+                    />
+                  </div>
+                  <p className="text-xs text-purple-300 mt-1">Your invoices will be numbered from this number onwards</p>
                 </div>
 
                 <div className="flex gap-3 mt-4">

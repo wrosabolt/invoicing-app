@@ -18,6 +18,7 @@ export default function Settings() {
   const [abn, setAbn] = useState("");
   const [hourlyRate, setHourlyRate] = useState("85");
   const [gstRate, setGstRate] = useState("10");
+  const [invoiceStartNumber, setInvoiceStartNumber] = useState("1");
 
   useEffect(() => { fetchSettings(); }, []);
 
@@ -33,6 +34,7 @@ export default function Settings() {
         setAbn(data.abn || "");
         setHourlyRate(String(data.hourlyRate || 85));
         setGstRate(String(data.gstRate || 10));
+        setInvoiceStartNumber(String(data.invoiceStartNumber || 1));
       }
     } finally { setLoading(false); }
   };
@@ -44,7 +46,7 @@ export default function Settings() {
       const res = await fetch("/api/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ companyName, address, email, phone, abn, hourlyRate: parseFloat(hourlyRate) || 0, gstRate: parseFloat(gstRate) || 10 }),
+        body: JSON.stringify({ companyName, address, email, phone, abn, hourlyRate: parseFloat(hourlyRate) || 0, gstRate: parseFloat(gstRate) || 10, invoiceStartNumber: parseInt(invoiceStartNumber) || 1 }),
       });
       setMessage(res.ok ? "Settings saved successfully!" : "Failed to save settings");
     } catch { setMessage("An error occurred"); }
@@ -132,6 +134,15 @@ export default function Settings() {
               <Percent className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-300" />
               <input type="number" value={gstRate} onChange={(e) => setGstRate(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-purple-300/50 focus:outline-none focus:ring-2 focus:ring-pink-400" min="0" max="100" step="0.1" />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-purple-200 mb-2">Invoice Starting Number</label>
+            <div className="relative">
+              <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-300" />
+              <input type="number" value={invoiceStartNumber} onChange={(e) => setInvoiceStartNumber(e.target.value)} className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-purple-300/50 focus:outline-none focus:ring-2 focus:ring-pink-400" min="1" />
+            </div>
+            <p className="text-xs text-purple-300 mt-1">Invoices will be numbered sequentially from this number</p>
           </div>
 
           <button type="submit" disabled={saving} className="w-full py-3 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 hover:from-pink-400 hover:via-purple-400 hover:to-indigo-400 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50">

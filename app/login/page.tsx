@@ -63,6 +63,7 @@ export default function Login() {
                 src="/logo.png"
                 alt="WayNueng Media"
                 fill
+                sizes="(max-width: 768px) 96px, 128px"
                 className="object-contain drop-shadow-2xl"
                 priority
               />

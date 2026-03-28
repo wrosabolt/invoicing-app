@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import InvoiceModal from "@/components/InvoiceModal";
 import type { Invoice, ClientInfo, InvoiceItem } from "@/lib/types";
-import { Plus, Settings, LogOut, FileText } from "lucide-react";
+import { Plus, Settings, LogOut, FileText, ShieldCheck } from "lucide-react";
 
 export default function Home() {
   const router = useRouter();
@@ -41,7 +41,7 @@ export default function Home() {
       const data = await res.json();
       const parsed = data.map((inv: any) => ({
         ...inv,
-        items: typeof inv.items === "string" ? JSON.parse(inv.items) : inv.items
+        items: typeof inv.items === "string" ? JSON.parse(inv.items) : inv.items,
       }));
       setInvoices(parsed);
     } catch (error) {
@@ -120,6 +120,16 @@ export default function Home() {
               <span className="text-sm text-gray-600">
                 Welcome, {session?.user?.name}
               </span>
+              {(session?.user as any)?.isAdmin && (
+                <button
+                  onClick={() => router.push("/admin")}
+                  className="flex items-center gap-1 px-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  title="Admin Panel"
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  Admin
+                </button>
+              )}
               <button
                 onClick={() => router.push("/settings")}
                 className="p-2 text-gray-600 hover:text-indigo-600 transition-colors"
@@ -224,7 +234,6 @@ export default function Home() {
           client={client}
           onClose={() => setShowModal(false)}
           onSaveAndDownload={handleSaveAndDownload}
-          onEmail={handleEmail}
         />
       )}
     </div>

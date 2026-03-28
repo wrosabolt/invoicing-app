@@ -52,6 +52,9 @@ export const authOptions: NextAuthOptions = {
         token.hourlyRate = u.hourlyRate;
         token.gstRate = u.gstRate;
       }
+      // Stamp isAdmin based on email — checked on every token refresh
+      token.isAdmin = !!(token.email &&
+        token.email.toLowerCase() === (process.env.ADMIN_EMAIL || "").toLowerCase());
       return token;
     },
     async session({ session, token }) {
@@ -65,7 +68,8 @@ export const authOptions: NextAuthOptions = {
           image: null as string | null,
           companyName: t.companyName as string,
           hourlyRate: t.hourlyRate as number,
-          gstRate: t.gstRate as number
+          gstRate: t.gstRate as number,
+          isAdmin: t.isAdmin as boolean,
         }
       } as any;
     }
@@ -77,11 +81,12 @@ export async function createUser(name: string, email: string, password: string, 
   const hashedPassword = await bcrypt.hash(password, 10);
   
   const result = await pool.query(
-    `INSERT INTO users (id, name, email, password, company_name, company_address, company_email, company_phone, abn, hourly_rate, gst_rate, created_at)
-     VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
-     RETURNING id, name, email, company_name, hourly_rate, gst_rate`,
-    [name, email.toLowerCase(), hashedPassword, companyData.companyName, companyData.address, 
-     companyData.email, companyData.phone, companyData.abn, companyData.hourlyRate, companyData.gstRate]
+    `INSERT INTO users (id, name, email, password, company_name, company_address, company_email, company_phone, abn, hourly_rate, gst_rate, invoice_start_number, created_at)
+     VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
+     RETURNING id, name, email, company_name, hourly_rate, gst_rate, invoice_start_number`,
+    [name, email.toLowerCase(), hashedPassword, companyData.companyName, companyData.address,
+     companyData.email, companyData.phone, companyData.abn, companyData.hourlyRate, companyData.gstRate,
+     companyData.invoiceStartNumber || 1]
   );
   
   return result.rows[0];

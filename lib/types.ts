@@ -47,6 +47,8 @@ export interface Invoice {
   status: string;
   paid: boolean;
   dueDate: string;
+  startDate: string;
+  endDate: string;
 }
 
 export interface InvoiceFormData {

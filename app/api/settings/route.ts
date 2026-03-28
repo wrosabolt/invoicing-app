@@ -17,8 +17,9 @@ export async function GET() {
         company_email as email,
         company_phone as phone,
         abn,
-        hourly_rate as "hourlyRate",
-        gst_rate as "gstRate"
+        hourly_rate::float as "hourlyRate",
+        gst_rate::float as "gstRate",
+        invoice_start_number as "invoiceStartNumber"
       FROM users WHERE id = $1`,
       [session.user.id]
     );
@@ -42,7 +43,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { companyName, address, email, phone, abn, hourlyRate, gstRate } = body;
+    const { companyName, address, email, phone, abn, hourlyRate, gstRate, invoiceStartNumber } = body;
 
     await pool.query(
       `UPDATE users SET
@@ -52,9 +53,10 @@ export async function PATCH(request: NextRequest) {
         company_phone = $4,
         abn = $5,
         hourly_rate = $6,
-        gst_rate = $7
-      WHERE id = $8`,
-      [companyName, address, email, phone, abn, hourlyRate, gstRate, session.user.id]
+        gst_rate = $7,
+        invoice_start_number = $8
+      WHERE id = $9`,
+      [companyName, address, email, phone, abn, hourlyRate, gstRate, invoiceStartNumber || 1, session.user.id]
     );
 
     return NextResponse.json({ success: true });

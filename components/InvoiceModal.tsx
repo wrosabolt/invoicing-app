@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { Invoice, ClientInfo } from "@/lib/types";
 
 interface Props {
@@ -15,11 +16,40 @@ interface Props {
   };
   onClose: () => void;
   onSaveAndDownload: () => void | Promise<void>;
-  onEmail: () => void;
 }
 
 export default function InvoiceModal({ invoice, client, companySettings, onClose, onSaveAndDownload, onEmail }: Props) {
+  const router = useRouter();
   const printRef = useRef<HTMLDivElement>(null);
+  const [emailStatus, setEmailStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [emailMessage, setEmailMessage] = useState("");
+
+  const handleEmail = async () => {
+    setEmailStatus("sending");
+    setEmailMessage("");
+    try {
+      const res = await fetch(`/api/invoices/${invoice.id}/email`, { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        setEmailStatus("sent");
+        setEmailMessage(`Sent to ${data.sentTo}`);
+      } else {
+        setEmailStatus("error");
+        setEmailMessage(data.error || "Failed to send");
+      }
+    } catch {
+      setEmailStatus("error");
+      setEmailMessage("Failed to send email");
+    }
+  };
+
+  const handlePrint = () => {
+    const clientName = invoice.clientCompany || invoice.clientName || "Client";
+    const originalTitle = document.title;
+    document.title = `${clientName} - ${invoice.invoiceNumber}`;
+    window.print();
+    document.title = originalTitle;
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -34,13 +64,20 @@ export default function InvoiceModal({ invoice, client, companySettings, onClose
               Back
             </button>
             <button
-              onClick={onEmail}
-              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              onClick={() => { onClose(); router.push(`/create-invoice?edit=${invoice.id}`); }}
+              className="px-4 py-2 bg-amber-500 text-white rounded hover:bg-amber-600"
             >
-              Email
+              Edit Invoice
             </button>
             <button
-              onClick={onSaveAndDownload}
+              onClick={handleEmail}
+              disabled={emailStatus === "sending"}
+              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+            >
+              {emailStatus === "sending" ? "Sending…" : emailStatus === "sent" ? "Sent ✓" : "Email To Client"}
+            </button>
+            <button
+              onClick={handlePrint}
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             >
               Save & Download
@@ -48,10 +85,16 @@ export default function InvoiceModal({ invoice, client, companySettings, onClose
           </div>
         </div>
 
-        <div ref={printRef} className="p-8">
+        {emailMessage && (
+          <div className={`px-6 py-2 text-sm ${emailStatus === "sent" ? "text-green-600" : "text-red-600"}`}>
+            {emailMessage}
+          </div>
+        )}
+
+        <div ref={printRef} id="print-area" className="p-8">
           <div className="flex justify-between items-start mb-8">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">INVOICE</h1>
+              <h1 className="text-2xl font-bold text-gray-900">TAX INVOICE</h1>
               <p className="text-xl font-semibold mt-1">{invoice.invoiceNumber}</p>
               <p className="text-gray-500 mt-1">
                 Date: {new Date(invoice.createdAt).toLocaleDateString("en-AU")}
@@ -69,7 +112,7 @@ export default function InvoiceModal({ invoice, client, companySettings, onClose
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-8 mb-8">
+          <div className="flex justify-between mb-8">
             <div>
               <h3 className="text-sm font-medium text-gray-500 uppercase mb-2">From</h3>
               <p className="font-medium text-gray-900">{companySettings.companyName}</p>
@@ -78,52 +121,78 @@ export default function InvoiceModal({ invoice, client, companySettings, onClose
               {companySettings.email && <p className="text-sm text-gray-600">{companySettings.email}</p>}
               {companySettings.phone && <p className="text-sm text-gray-600">{companySettings.phone}</p>}
             </div>
-            <div>
+            <div className="w-[304px] text-left">
               <h3 className="text-sm font-medium text-gray-500 uppercase mb-2">Bill To</h3>
-              <p className="font-medium text-gray-900">{client?.name || "Unknown"}</p>
-              {client?.company && <p className="text-sm text-gray-600">{client.company}</p>}
+              <p className="font-medium text-gray-900">{client?.company || client?.name || "Unknown"}</p>
               <p className="text-sm text-gray-600 whitespace-pre-line">{client?.address}</p>
-              {client?.email && <p className="text-sm text-gray-600">{client.email}</p>}
               {client?.phone && <p className="text-sm text-gray-600">{client.phone}</p>}
             </div>
           </div>
 
-          <table className="w-full mb-8">
-            <thead>
-              <tr className="border-b-2 border-gray-300">
-                <th className="text-left py-3 text-sm font-medium text-gray-700">Description</th>
-                <th className="text-right py-3 text-sm font-medium text-gray-700">Hours</th>
-                <th className="text-right py-3 text-sm font-medium text-gray-700">Rate</th>
-                <th className="text-right py-3 text-sm font-medium text-gray-700">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {invoice.items.map((item) => (
-                <tr key={item.id} className="border-b border-gray-200">
-                  <td className="py-3 text-gray-900">{item.description || "Professional services"}</td>
-                  <td className="py-3 text-right text-gray-900">{item.hoursWorked}</td>
-                  <td className="py-3 text-right text-gray-900">${item.hourlyRate?.toFixed(2)}</td>
-                  <td className="py-3 text-right text-gray-900">
-                    ${(item.hoursWorked * (item.hourlyRate || 0)).toFixed(2)}
-                  </td>
+          {(invoice.startDate || invoice.endDate) && (
+            <div className="mb-6 text-gray-800">
+              <p>Tax Invoice for Work Performed</p>
+              <p>
+                <span className="font-medium">
+                  {invoice.startDate ? new Date(invoice.startDate).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" }) : ""}
+                </span>{" "}
+                to{" "}
+                <span className="font-medium">
+                  {invoice.endDate ? new Date(invoice.endDate).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" }) : ""}
+                </span>.
+              </p>
+            </div>
+          )}
+
+          <div className="overflow-x-auto mb-8">
+            <table className="w-full">
+              <colgroup>
+                <col className="w-auto" />
+                <col className="w-20" />
+                <col className="w-28" />
+                <col className="w-28" />
+              </colgroup>
+              <thead>
+                <tr className="border-b-2 border-gray-300">
+                  <th className="text-left py-3 pr-6 text-sm font-medium text-gray-700">Description</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Hours</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Rate</th>
+                  <th className="text-right py-3 text-sm font-medium text-gray-700">Amount</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {invoice.items.map((item, i) => {
+                  const hours = parseFloat(String(item.hoursWorked)) || 0;
+                  const rate = parseFloat(String(item.hourlyRate)) || 0;
+                  return (
+                    <tr key={item.id ?? i} className="border-b border-gray-200">
+                      <td className="py-3 pr-6 text-gray-900 align-top break-words">{item.description || "Professional services"}</td>
+                      <td className="py-3 px-4 text-gray-900 align-top whitespace-nowrap">{hours}</td>
+                      <td className="py-3 px-4 text-gray-900 align-top whitespace-nowrap">${rate.toFixed(2)}</td>
+                      <td className="py-3 text-right text-gray-900 align-top whitespace-nowrap">${(hours * rate).toFixed(2)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
 
           <div className="flex justify-end">
             <div className="w-64">
               <div className="flex justify-between py-2">
                 <span className="text-gray-600">Subtotal</span>
-                <span className="text-gray-900">${invoice.subtotal.toFixed(2)}</span>
+                <span className="text-gray-900">${parseFloat(String(invoice.subtotal)).toFixed(2)}</span>
               </div>
               <div className="flex justify-between py-2">
                 <span className="text-gray-600">GST ({invoice.gstRate}%)</span>
-                <span className="text-gray-900">${invoice.gstAmount.toFixed(2)}</span>
+                <span className="text-gray-900">${parseFloat(String(invoice.gstAmount)).toFixed(2)}</span>
               </div>
               <div className="flex justify-between py-2 border-t-2 border-gray-300 font-bold text-lg">
-                <span className="text-gray-900">Total</span>
-                <span className="text-gray-900">${invoice.total.toFixed(2)}</span>
+                <div>
+                  <p className="text-gray-900">Total Payable</p>
+                  <p className="text-sm font-normal text-gray-400">(Inc.GST - Terms - Strictly 7 Days)</p>
+                </div>
+                <span className="text-gray-900">${parseFloat(String(invoice.total)).toFixed(2)}</span>
               </div>
             </div>
           </div>
