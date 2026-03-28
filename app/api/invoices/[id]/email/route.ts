@@ -111,8 +111,13 @@ export async function POST(
     });
 
     if (error) {
-      console.error('Resend error:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error('Resend error full:', JSON.stringify(error));
+      return NextResponse.json({
+        error: error.message,
+        detail: JSON.stringify(error),
+        fromEmail: FROM_EMAIL,
+        apiKeyPrefix: process.env.RESEND_API_KEY?.substring(0, 10),
+      }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, sentTo: row.client_email });
