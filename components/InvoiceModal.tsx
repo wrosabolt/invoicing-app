@@ -35,7 +35,7 @@ export default function InvoiceModal({ invoice, client, companySettings, onClose
         setEmailMessage(`Sent to ${data.sentTo}`);
       } else {
         setEmailStatus("error");
-        setEmailMessage(`${data.error || "Failed to send"} | from:${data.fromEmail} | key:${data.apiKeyPrefix}`);
+        setEmailMessage(data.error || "Failed to send");
       }
     } catch {
       setEmailStatus("error");

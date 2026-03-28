@@ -8,7 +8,7 @@ import { createElement, type JSXElementConstructor, type ReactElement } from 're
 import { InvoicePDF } from '@/components/pdf/InvoicePDF';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'invoices@yourdomain.com';
+const FROM_EMAIL = (process.env.RESEND_FROM_EMAIL || 'invoices@yourdomain.com').trim();
 
 export async function POST(
   request: Request,
@@ -111,13 +111,8 @@ export async function POST(
     });
 
     if (error) {
-      console.error('Resend error full:', JSON.stringify(error));
-      return NextResponse.json({
-        error: error.message,
-        detail: JSON.stringify(error),
-        fromEmail: FROM_EMAIL,
-        apiKeyPrefix: process.env.RESEND_API_KEY?.substring(0, 10),
-      }, { status: 500 });
+      console.error('Resend error:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, sentTo: row.client_email });
