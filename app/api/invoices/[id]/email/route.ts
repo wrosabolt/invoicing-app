@@ -3,8 +3,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { pool } from '@/lib/db';
 import { Resend } from 'resend';
-import { renderToBuffer } from '@react-pdf/renderer';
-import { createElement } from 'react';
+import { renderToBuffer, type DocumentProps } from '@react-pdf/renderer';
+import { createElement, type JSXElementConstructor, type ReactElement } from 'react';
 import { InvoicePDF } from '@/components/pdf/InvoicePDF';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -88,7 +88,8 @@ export async function POST(
 
     // Generate PDF
     const pdfBuffer = await renderToBuffer(
-      createElement(InvoicePDF, { invoice: invoice as any, companySettings })
+      createElement(InvoicePDF, { invoice: invoice as any, companySettings }) as
+        ReactElement<DocumentProps, JSXElementConstructor<DocumentProps>>
     );
 
     const clientName = row.client_company || row.client_name || 'Client';
