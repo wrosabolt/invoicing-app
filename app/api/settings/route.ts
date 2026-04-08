@@ -11,7 +11,8 @@ export async function GET() {
     }
 
     const result = await pool.query(
-      `SELECT 
+      `SELECT
+        name as "ownerName",
         company_name as "companyName",
         company_address as address,
         company_email as email,
@@ -19,7 +20,10 @@ export async function GET() {
         abn,
         hourly_rate::float as "hourlyRate",
         gst_rate::float as "gstRate",
-        invoice_start_number as "invoiceStartNumber"
+        invoice_start_number as "invoiceStartNumber",
+        bank_name as "bankName",
+        bsb_number as "bsbNumber",
+        account_number as "accountNumber"
       FROM users WHERE id = $1`,
       [session.user.id]
     );
@@ -43,20 +47,24 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { companyName, address, email, phone, abn, hourlyRate, gstRate, invoiceStartNumber } = body;
+    const { ownerName, companyName, address, email, phone, abn, hourlyRate, gstRate, invoiceStartNumber, bankName, bsbNumber, accountNumber } = body;
 
     await pool.query(
       `UPDATE users SET
-        company_name = $1,
-        company_address = $2,
-        company_email = $3,
-        company_phone = $4,
-        abn = $5,
-        hourly_rate = $6,
-        gst_rate = $7,
-        invoice_start_number = $8
-      WHERE id = $9`,
-      [companyName, address, email, phone, abn, hourlyRate, gstRate, invoiceStartNumber || 1, session.user.id]
+        name = $1,
+        company_name = $2,
+        company_address = $3,
+        company_email = $4,
+        company_phone = $5,
+        abn = $6,
+        hourly_rate = $7,
+        gst_rate = $8,
+        invoice_start_number = $9,
+        bank_name = $10,
+        bsb_number = $11,
+        account_number = $12
+      WHERE id = $13`,
+      [ownerName, companyName, address, email, phone, abn, hourlyRate, gstRate, invoiceStartNumber || 1, bankName || null, bsbNumber || null, accountNumber || null, session.user.id]
     );
 
     return NextResponse.json({ success: true });

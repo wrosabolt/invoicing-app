@@ -31,6 +31,9 @@ export async function POST(request: NextRequest) {
       email: body.email || '',
       phone: body.phone || '',
       address: body.address || '',
+      contactName: body.contactName || null,
+      contactEmail: body.contactEmail || null,
+      contactRole: body.contactRole || null,
     };
     const created = await createClient(client);
     return NextResponse.json(created, { status: 201 });

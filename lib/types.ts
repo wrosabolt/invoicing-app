@@ -6,6 +6,9 @@ export interface CompanySettings {
   abn: string;
   hourlyRate: number;
   gstRate: number; // Default 10, stored as percentage (e.g., 10 for 10%)
+  bankName?: string;
+  bsbNumber?: string;
+  accountNumber?: string;
 }
 
 export interface ClientInfo {
@@ -15,6 +18,9 @@ export interface ClientInfo {
   address: string;
   email: string;
   phone: string;
+  contactName?: string;
+  contactEmail?: string;
+  contactRole?: string;
 }
 
 export interface InvoiceItem {
@@ -64,4 +70,7 @@ export const DEFAULT_COMPANY_SETTINGS: CompanySettings = {
   abn: "",
   hourlyRate: 0,
   gstRate: 10,
+  bankName: "",
+  bsbNumber: "",
+  accountNumber: "",
 };

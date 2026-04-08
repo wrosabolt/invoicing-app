@@ -1,8 +1,78 @@
 import { Pool } from 'pg';
 
-const pool = new Pool({ connectionString: process.env.PG_URL });
+const pool = new Pool({
+  connectionString: process.env.PG_URL,
+  ssl: { rejectUnauthorized: false },
+});
 
 export { pool };
+
+// Auto-migration: creates tables and adds columns if missing. Safe to re-run.
+async function runMigrations() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      name                 TEXT,
+      email                TEXT UNIQUE NOT NULL,
+      password             TEXT NOT NULL,
+      company_name         TEXT,
+      company_address      TEXT,
+      company_email        TEXT,
+      company_phone        TEXT,
+      abn                  TEXT,
+      hourly_rate          NUMERIC DEFAULT 85,
+      gst_rate             NUMERIC DEFAULT 10,
+      invoice_start_number INTEGER DEFAULT 1,
+      bank_name            TEXT,
+      bsb_number           TEXT,
+      account_number       TEXT,
+      created_at           TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS clients (
+      id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      name          TEXT NOT NULL,
+      company       TEXT,
+      email         TEXT,
+      phone         TEXT,
+      address       TEXT,
+      contact_name  TEXT,
+      contact_email TEXT,
+      contact_role  TEXT,
+      created_at    TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS invoices (
+      id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id        UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      client_id      UUID REFERENCES clients(id) ON DELETE SET NULL,
+      invoice_number TEXT NOT NULL,
+      items          JSONB NOT NULL DEFAULT '[]',
+      subtotal       NUMERIC DEFAULT 0,
+      gst_rate       NUMERIC DEFAULT 10,
+      gst_amount     NUMERIC DEFAULT 0,
+      total          NUMERIC DEFAULT 0,
+      status         TEXT DEFAULT 'draft',
+      paid           BOOLEAN DEFAULT FALSE,
+      due_date       DATE,
+      start_date     DATE,
+      end_date       DATE,
+      created_at     TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+  // Add any new columns to existing tables
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS bank_name TEXT`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS bsb_number TEXT`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS account_number TEXT`);
+  await pool.query(`ALTER TABLE clients ADD COLUMN IF NOT EXISTS contact_name TEXT`);
+  await pool.query(`ALTER TABLE clients ADD COLUMN IF NOT EXISTS contact_email TEXT`);
+  await pool.query(`ALTER TABLE clients ADD COLUMN IF NOT EXISTS contact_role TEXT`);
+}
+
+runMigrations().catch(console.error);
 
 export async function query(text: string, params?: any[]) {
   const client = await pool.connect();
@@ -143,10 +213,10 @@ export async function getClients(userId: string) {
 
 export async function createClient(client: any) {
   const result = await query(
-    `INSERT INTO clients (id, user_id, name, company, email, phone, address, created_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+    `INSERT INTO clients (id, user_id, name, company, email, phone, address, contact_name, contact_email, contact_role, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
      RETURNING *`,
-    [client.id, client.userId, client.name, client.company, client.email, client.phone, client.address]
+    [client.id, client.userId, client.name, client.company, client.email, client.phone, client.address, client.contactName || null, client.contactEmail || null, client.contactRole || null]
   );
   return result.rows[0];
 }

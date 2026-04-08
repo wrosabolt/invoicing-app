@@ -36,10 +36,15 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const { id } = await params;
-    const { email } = await request.json();
+    const { email, contactName, contactEmail, contactRole } = await request.json();
     await pool.query(
-      'UPDATE clients SET email = $1 WHERE id = $2 AND user_id = $3',
-      [email, id, session.user.id]
+      `UPDATE clients SET
+        email = $1,
+        contact_name = $2,
+        contact_email = $3,
+        contact_role = $4
+      WHERE id = $5 AND user_id = $6`,
+      [email, contactName || null, contactEmail || null, contactRole || null, id, session.user.id]
     );
     return NextResponse.json({ success: true });
   } catch (error: any) {

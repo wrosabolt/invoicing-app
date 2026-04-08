@@ -14,7 +14,7 @@ export default function Home() {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [client, setClient] = useState<ClientInfo | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [settings, setSettings] = useState({ companyName: "", address: "", email: "", phone: "", abn: "" });
+  const [settings, setSettings] = useState({ companyName: "", address: "", email: "", phone: "", abn: "", bankName: "", bsbNumber: "", accountNumber: "" });
 
   useEffect(() => {
     if (status === "authenticated") {

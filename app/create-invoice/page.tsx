@@ -9,6 +9,9 @@ interface ClientInfo {
   address: string;
   email: string;
   phone: string;
+  contactName: string;
+  contactEmail: string;
+  contactRole: string;
 }
 
 interface InvoiceItem {
@@ -24,6 +27,9 @@ interface SavedClient {
   address: string;
   email: string;
   phone: string;
+  contact_name?: string;
+  contact_email?: string;
+  contact_role?: string;
 }
 
 function toInputDate(d: Date) {
@@ -47,7 +53,7 @@ function CreateInvoiceForm() {
 
   const [clients, setClients] = useState<SavedClient[]>([]);
   const [selectedClientId, setSelectedClientId] = useState<string>("new");
-  const [client, setClient] = useState<ClientInfo>({ name: "", company: "", address: "", email: "", phone: "" });
+  const [client, setClient] = useState<ClientInfo>({ name: "", company: "", address: "", email: "", phone: "", contactName: "", contactEmail: "", contactRole: "" });
   const [items, setItems] = useState<InvoiceItem[]>([DEFAULT_ITEM]);
   const [settings, setSettings] = useState<any>(null);
   const [gstRate, setGstRate] = useState(10);
@@ -110,6 +116,9 @@ function CreateInvoiceForm() {
                 address: matched.address || "",
                 email: matched.email || "",
                 phone: matched.phone || "",
+                contactName: matched.contact_name || "",
+                contactEmail: matched.contact_email || "",
+                contactRole: matched.contact_role || "",
               });
             }
           }
@@ -145,6 +154,9 @@ function CreateInvoiceForm() {
               address: matched.address || "",
               email: matched.email || "",
               phone: matched.phone || "",
+              contactName: matched.contact_name || "",
+              contactEmail: matched.contact_email || "",
+              contactRole: matched.contact_role || "",
             });
           }
         }
@@ -161,7 +173,7 @@ function CreateInvoiceForm() {
     setSelectedClientId(clientId);
 
     if (clientId === "new") {
-      setClient({ name: "", company: "", address: "", email: "", phone: "" });
+      setClient({ name: "", company: "", address: "", email: "", phone: "", contactName: "", contactEmail: "", contactRole: "" });
       const defaultRate = settings?.hourlyRate || 85;
       setItems([{ description: "", hoursWorked: 0, hourlyRate: defaultRate }]);
       return;
@@ -175,6 +187,9 @@ function CreateInvoiceForm() {
         address: selected.address || "",
         email: selected.email || "",
         phone: selected.phone || "",
+        contactName: selected.contact_name || "",
+        contactEmail: selected.contact_email || "",
+        contactRole: selected.contact_role || "",
       });
     }
 
@@ -243,19 +258,24 @@ function CreateInvoiceForm() {
         const clientRes = await fetch("/api/clients", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...client, name: client.company }),
+          body: JSON.stringify({ ...client, name: client.company, contactName: client.contactName, contactEmail: client.contactEmail, contactRole: client.contactRole }),
         });
         if (!clientRes.ok) throw new Error("Failed to save client");
         const savedClient = await clientRes.json();
         clientId = savedClient.id;
       } else {
-        // Update email on existing client if changed
+        // Update contact details on existing client
         const stored = clients.find(c => c.id === selectedClientId);
-        if (stored && client.email !== stored.email) {
+        if (stored && (
+          client.email !== stored.email ||
+          client.contactName !== (stored.contact_name || "") ||
+          client.contactEmail !== (stored.contact_email || "") ||
+          client.contactRole !== (stored.contact_role || "")
+        )) {
           await fetch(`/api/clients/${selectedClientId}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: client.email }),
+            body: JSON.stringify({ email: client.email, contactName: client.contactName, contactEmail: client.contactEmail, contactRole: client.contactRole }),
           });
         }
       }
@@ -381,6 +401,41 @@ function CreateInvoiceForm() {
                 onChange={e => setClient({ ...client, email: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded bg-white text-gray-900"
               />
+            </div>
+            <div className="border-t border-gray-200 pt-4 mt-2">
+              <p className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">Contact Person</p>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Contact Name</label>
+                  <input
+                    type="text"
+                    placeholder="John Smith"
+                    value={client.contactName}
+                    onChange={e => setClient({ ...client, contactName: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded bg-white text-gray-900"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Contact Email</label>
+                  <input
+                    type="email"
+                    placeholder="john.smith@acme.com.au"
+                    value={client.contactEmail}
+                    onChange={e => setClient({ ...client, contactEmail: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded bg-white text-gray-900"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Contact Role</label>
+                  <input
+                    type="text"
+                    placeholder="Project Manager"
+                    value={client.contactRole}
+                    onChange={e => setClient({ ...client, contactRole: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded bg-white text-gray-900"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>

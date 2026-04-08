@@ -180,14 +180,21 @@ const styles = StyleSheet.create({
 interface InvoicePDFProps {
   invoice: Invoice;
   companySettings?: CompanySettings | null;
+  client?: { contactName?: string; contactEmail?: string; contactRole?: string; contact_name?: string; contact_email?: string; contact_role?: string } | null;
 }
 
-export function InvoicePDF({ invoice, companySettings }: InvoicePDFProps) {
+export function InvoicePDF({ invoice, companySettings, client }: InvoicePDFProps) {
   const companyName = companySettings?.companyName || "Your Company";
   const companyAddress = companySettings?.address || "";
   const companyEmail = companySettings?.email || "";
   const companyPhone = companySettings?.phone || "";
   const companyAbn = companySettings?.abn || "";
+  const bankName = companySettings?.bankName || "";
+  const bsbNumber = companySettings?.bsbNumber || "";
+  const accountNumber = companySettings?.accountNumber || "";
+  const contactName = client?.contactName || client?.contact_name || "";
+  const contactEmail = client?.contactEmail || client?.contact_email || "";
+  const contactRole = client?.contactRole || client?.contact_role || "";
 
   return (
     <Document>
@@ -221,6 +228,16 @@ export function InvoicePDF({ invoice, companySettings }: InvoicePDFProps) {
             {companyAbn ? <Text style={styles.partyDetail}>ABN: {companyAbn}</Text> : null}
             {companyEmail ? <Text style={styles.partyDetail}>{companyEmail}</Text> : null}
             {companyPhone ? <Text style={styles.partyDetail}>{companyPhone}</Text> : null}
+
+            {(bankName || bsbNumber || accountNumber) ? (
+              <View style={{ marginTop: 12 }}>
+                <Text style={styles.sectionTitle}>Pay To</Text>
+                <Text style={styles.partyName}>{companyName}</Text>
+                {bankName ? <Text style={styles.partyDetail}>{bankName}</Text> : null}
+                {bsbNumber ? <Text style={styles.partyDetail}>BSB: {bsbNumber}</Text> : null}
+                {accountNumber ? <Text style={styles.partyDetail}>Account: {accountNumber}</Text> : null}
+              </View>
+            ) : null}
           </View>
           <View style={styles.partyBlock}>
             <Text style={styles.sectionTitle}>Bill To</Text>
@@ -229,6 +246,14 @@ export function InvoicePDF({ invoice, companySettings }: InvoicePDFProps) {
             </Text>
             {invoice.clientAddress ? <Text style={styles.partyDetail}>{invoice.clientAddress}</Text> : null}
             {invoice.clientPhone ? <Text style={styles.partyDetail}>{invoice.clientPhone}</Text> : null}
+            {contactName ? (
+              <View style={{ marginTop: 8 }}>
+                <Text style={[styles.sectionTitle, { marginBottom: 3 }]}>Contact</Text>
+                <Text style={styles.partyName}>{contactName}</Text>
+                {contactRole ? <Text style={styles.partyDetail}>{contactRole}</Text> : null}
+                {contactEmail ? <Text style={styles.partyDetail}>{contactEmail}</Text> : null}
+              </View>
+            ) : null}
           </View>
         </View>
 
