@@ -128,40 +128,30 @@ const styles = StyleSheet.create({
   colHours: { flex: 1, fontSize: 10, textAlign: "left" },
   colRate: { flex: 1, fontSize: 10, textAlign: "left" },
   colAmount: { flex: 1, fontSize: 10, textAlign: "right" },
-  // Totals
+  // Totals — rows mirror table columns (flex 3 / 1 / 1 / 1)
   totalsSection: {
-    alignItems: "flex-start",
     marginBottom: 24,
   },
   totalsTable: {
     width: "100%",
-    borderWidth: 1,
-    borderColor: "#e5e5e5",
-    borderRadius: 4,
   },
   totalsRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e5e5",
+    paddingVertical: 6,
   },
-  totalsLabel: { fontSize: 10, color: "#555" },
-  totalsValue: { fontSize: 10 },
+  totalsLabel: { flex: 2, fontSize: 10, color: "#555" },
+  totalsValue: { flex: 1, fontSize: 10, textAlign: "right" },
   totalsRowTotal: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "flex-start",
-    paddingHorizontal: 10,
     paddingVertical: 8,
-    backgroundColor: "#1a1a1a",
-    borderBottomLeftRadius: 4,
-    borderBottomRightRadius: 4,
+    borderTopWidth: 1,
+    borderTopColor: "#333",
+    marginTop: 2,
   },
-  totalLabel: { fontSize: 11, fontWeight: "bold", color: "white" },
+  totalLabel: { flex: 2, fontSize: 11, fontWeight: "bold", color: "#1a1a1a" },
   totalSubLabel: { fontSize: 8, color: "#aaaaaa", marginTop: 2 },
-  totalValue: { fontSize: 11, fontWeight: "bold", color: "white" },
+  totalValue: { flex: 1, fontSize: 11, fontWeight: "bold", color: "#1a1a1a", textAlign: "right" },
   // Footer
   footer: {
     position: "absolute",
@@ -291,23 +281,26 @@ export function InvoicePDF({ invoice, companySettings, client }: InvoicePDFProps
           })}
         </View>
 
-        {/* Totals */}
+        {/* Totals — spacer (flex 3) mirrors description col; label+value mirror hours/rate/amount */}
         <View style={styles.totalsSection}>
           <View style={styles.totalsTable}>
             <View style={styles.totalsRow}>
+              <View style={{ flex: 3 }} />
               <Text style={styles.totalsLabel}>Subtotal</Text>
               <Text style={styles.totalsValue}>
                 {formatCurrency(parseFloat(String(invoice.subtotal)))}
               </Text>
             </View>
             <View style={styles.totalsRow}>
+              <View style={{ flex: 3 }} />
               <Text style={styles.totalsLabel}>GST ({invoice.gstRate}%)</Text>
               <Text style={styles.totalsValue}>
                 {formatCurrency(parseFloat(String(invoice.gstAmount)))}
               </Text>
             </View>
             <View style={styles.totalsRowTotal}>
-              <View>
+              <View style={{ flex: 3 }} />
+              <View style={{ flex: 2 }}>
                 <Text style={styles.totalLabel}>Total Payable <Text style={{ color: "#aaaaaa", fontSize: 9, fontWeight: "normal" }}>($AUD)</Text></Text>
                 <Text style={styles.totalSubLabel}>(Inc.GST - Terms - Strictly 14 Days)</Text>
               </View>
