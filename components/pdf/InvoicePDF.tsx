@@ -130,11 +130,11 @@ const styles = StyleSheet.create({
   colAmount: { flex: 1, fontSize: 10, textAlign: "right" },
   // Totals
   totalsSection: {
-    alignItems: "flex-end",
+    alignItems: "flex-start",
     marginBottom: 24,
   },
   totalsTable: {
-    width: 230,
+    width: "100%",
     borderWidth: 1,
     borderColor: "#e5e5e5",
     borderRadius: 4,
@@ -308,7 +308,7 @@ export function InvoicePDF({ invoice, companySettings, client }: InvoicePDFProps
             </View>
             <View style={styles.totalsRowTotal}>
               <View>
-                <Text style={styles.totalLabel}>Total Payable</Text>
+                <Text style={styles.totalLabel}>Total Payable <Text style={{ color: "#aaaaaa", fontSize: 9, fontWeight: "normal" }}>($AUD)</Text></Text>
                 <Text style={styles.totalSubLabel}>(Inc.GST - Terms - Strictly 14 Days)</Text>
               </View>
               <Text style={styles.totalValue}>

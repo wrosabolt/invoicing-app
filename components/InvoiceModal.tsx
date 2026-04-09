@@ -209,23 +209,21 @@ export default function InvoiceModal({ invoice, client, companySettings, onClose
             </table>
           </div>
 
-          <div className="flex justify-end">
-            <div className="w-64">
-              <div className="flex justify-between py-2">
-                <span className="text-gray-600">Subtotal</span>
-                <span className="text-gray-900">${parseFloat(String(invoice.subtotal)).toFixed(2)}</span>
+          <div className="w-full">
+            <div className="flex justify-between py-2">
+              <span className="text-gray-600">Subtotal</span>
+              <span className="text-gray-900">${parseFloat(String(invoice.subtotal)).toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between py-2">
+              <span className="text-gray-600">GST ({invoice.gstRate}%)</span>
+              <span className="text-gray-900">${parseFloat(String(invoice.gstAmount)).toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between py-2 border-t-2 border-gray-300 font-bold text-lg">
+              <div>
+                <p className="text-gray-900">Total Payable <span className="text-gray-400 font-normal text-base">($AUD)</span></p>
+                <p className="text-sm font-normal text-gray-400">(Inc.GST - Terms - Strictly 14 Days)</p>
               </div>
-              <div className="flex justify-between py-2">
-                <span className="text-gray-600">GST ({invoice.gstRate}%)</span>
-                <span className="text-gray-900">${parseFloat(String(invoice.gstAmount)).toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between py-2 border-t-2 border-gray-300 font-bold text-lg">
-                <div>
-                  <p className="text-gray-900">Total Payable</p>
-                  <p className="text-sm font-normal text-gray-400">(Inc.GST - Terms - Strictly 14 Days)</p>
-                </div>
-                <span className="text-gray-900">${parseFloat(String(invoice.total)).toFixed(2)}</span>
-              </div>
+              <span className="text-gray-900">${parseFloat(String(invoice.total)).toFixed(2)}</span>
             </div>
           </div>
 
