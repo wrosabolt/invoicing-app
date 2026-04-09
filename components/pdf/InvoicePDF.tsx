@@ -231,8 +231,7 @@ export function InvoicePDF({ invoice, companySettings, client }: InvoicePDFProps
 
             {(bankName || bsbNumber || accountNumber) ? (
               <View style={{ marginTop: 12 }}>
-                <Text style={styles.sectionTitle}>Pay To</Text>
-                <Text style={styles.partyName}>{companyName}</Text>
+                <Text style={styles.sectionTitle}>Please remit payment to the following bank account</Text>
                 {bankName ? <Text style={styles.partyDetail}>{bankName}</Text> : null}
                 {bsbNumber ? <Text style={styles.partyDetail}>BSB: {bsbNumber}</Text> : null}
                 {accountNumber ? <Text style={styles.partyDetail}>Account: {accountNumber}</Text> : null}
@@ -240,7 +239,7 @@ export function InvoicePDF({ invoice, companySettings, client }: InvoicePDFProps
             ) : null}
           </View>
           <View style={styles.partyBlock}>
-            <Text style={styles.sectionTitle}>Bill To</Text>
+            <Text style={styles.sectionTitle}>Invoice to:</Text>
             <Text style={styles.partyName}>
               {invoice.clientCompany || invoice.clientName || ""}
             </Text>
@@ -248,7 +247,7 @@ export function InvoicePDF({ invoice, companySettings, client }: InvoicePDFProps
             {invoice.clientPhone ? <Text style={styles.partyDetail}>{invoice.clientPhone}</Text> : null}
             {contactName ? (
               <View style={{ marginTop: 8 }}>
-                <Text style={[styles.sectionTitle, { marginBottom: 3 }]}>Contact</Text>
+                <Text style={[styles.sectionTitle, { marginBottom: 3 }]}>Attention:</Text>
                 <Text style={styles.partyName}>{contactName}</Text>
                 {contactRole ? <Text style={styles.partyDetail}>{contactRole}</Text> : null}
                 {contactEmail ? <Text style={styles.partyDetail}>{contactEmail}</Text> : null}
@@ -310,7 +309,7 @@ export function InvoicePDF({ invoice, companySettings, client }: InvoicePDFProps
             <View style={styles.totalsRowTotal}>
               <View>
                 <Text style={styles.totalLabel}>Total Payable</Text>
-                <Text style={styles.totalSubLabel}>(Inc.GST - Terms - Strictly 7 Days)</Text>
+                <Text style={styles.totalSubLabel}>(Inc.GST - Terms - Strictly 14 Days)</Text>
               </View>
               <Text style={styles.totalValue}>
                 {formatCurrency(parseFloat(String(invoice.total)))}

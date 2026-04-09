@@ -134,8 +134,7 @@ export default function InvoiceModal({ invoice, client, companySettings, onClose
 
               {(companySettings.bankName || companySettings.bsbNumber || companySettings.accountNumber) && (
                 <div className="mt-4">
-                  <h3 className="text-sm font-medium text-gray-500 uppercase mb-2">Pay To</h3>
-                  <p className="font-medium text-gray-900">{companySettings.companyName}</p>
+                  <h3 className="text-sm font-medium text-gray-500 mb-2">Please remit payment to the following bank account</h3>
                   {companySettings.bankName && <p className="text-sm text-gray-600">{companySettings.bankName}</p>}
                   {companySettings.bsbNumber && <p className="text-sm text-gray-600">BSB: {companySettings.bsbNumber}</p>}
                   {companySettings.accountNumber && <p className="text-sm text-gray-600">Account: {companySettings.accountNumber}</p>}
@@ -143,13 +142,13 @@ export default function InvoiceModal({ invoice, client, companySettings, onClose
               )}
             </div>
             <div className="w-[304px] text-left">
-              <h3 className="text-sm font-medium text-gray-500 uppercase mb-2">Bill To</h3>
+              <h3 className="text-sm font-medium text-gray-500 uppercase mb-2">Invoice to:</h3>
               <p className="font-medium text-gray-900">{client?.company || client?.name || "Unknown"}</p>
               <p className="text-sm text-gray-600 whitespace-pre-line">{client?.address}</p>
               {client?.phone && <p className="text-sm text-gray-600">{client.phone}</p>}
               {((client as any)?.contact_name || (client as any)?.contactName) && (
                 <div className="mt-3">
-                  <p className="text-xs font-medium text-gray-400 uppercase">Contact</p>
+                  <p className="text-xs font-medium text-gray-400 uppercase">Attention:</p>
                   <p className="text-sm text-gray-700 font-medium">{(client as any).contact_name || (client as any).contactName}</p>
                   {((client as any)?.contact_role || (client as any)?.contactRole) && (
                     <p className="text-sm text-gray-600">{(client as any).contact_role || (client as any).contactRole}</p>
@@ -223,7 +222,7 @@ export default function InvoiceModal({ invoice, client, companySettings, onClose
               <div className="flex justify-between py-2 border-t-2 border-gray-300 font-bold text-lg">
                 <div>
                   <p className="text-gray-900">Total Payable</p>
-                  <p className="text-sm font-normal text-gray-400">(Inc.GST - Terms - Strictly 7 Days)</p>
+                  <p className="text-sm font-normal text-gray-400">(Inc.GST - Terms - Strictly 14 Days)</p>
                 </div>
                 <span className="text-gray-900">${parseFloat(String(invoice.total)).toFixed(2)}</span>
               </div>
