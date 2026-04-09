@@ -206,27 +206,25 @@ export default function InvoiceModal({ invoice, client, companySettings, onClose
                   );
                 })}
               </tbody>
-              <tfoot>
-                <tr>
-                  <td className="py-2"></td>
-                  <td className="py-2 px-4 text-gray-600" colSpan={2}>Subtotal</td>
-                  <td className="py-2 text-right text-gray-900">${parseFloat(String(invoice.subtotal)).toFixed(2)}</td>
-                </tr>
-                <tr>
-                  <td className="py-2"></td>
-                  <td className="py-2 px-4 text-gray-600" colSpan={2}>GST ({invoice.gstRate}%)</td>
-                  <td className="py-2 text-right text-gray-900">${parseFloat(String(invoice.gstAmount)).toFixed(2)}</td>
-                </tr>
-                <tr className="border-t-2 border-gray-300">
-                  <td className="py-3"></td>
-                  <td className="py-3 px-4 font-bold text-lg" colSpan={2}>
-                    <span>Total Payable <span className="text-gray-400 font-normal text-base">($AUD)</span></span>
-                    <p className="text-sm font-normal text-gray-400">(Inc.GST - Terms - Strictly 14 Days)</p>
-                  </td>
-                  <td className="py-3 text-right font-bold text-lg text-gray-900 align-top">${parseFloat(String(invoice.total)).toFixed(2)}</td>
-                </tr>
-              </tfoot>
             </table>
+          </div>
+
+          <div className="w-full">
+            <div className="flex justify-between py-2">
+              <span className="text-gray-600">Subtotal</span>
+              <span className="text-gray-900">${parseFloat(String(invoice.subtotal)).toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between py-2">
+              <span className="text-gray-600">GST ({invoice.gstRate}%)</span>
+              <span className="text-gray-900">${parseFloat(String(invoice.gstAmount)).toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between py-2 border-t-2 border-gray-300 font-bold text-lg">
+              <div>
+                <p className="text-gray-900">Total Payable <span className="text-gray-400 font-normal text-base">($AUD)</span></p>
+                <p className="text-sm font-normal text-gray-400">(Inc.GST - Terms - Strictly 14 Days)</p>
+              </div>
+              <span className="text-gray-900">${parseFloat(String(invoice.total)).toFixed(2)}</span>
+            </div>
           </div>
 
           <div className="mt-12 pt-4 border-t text-center text-gray-500 text-sm">
